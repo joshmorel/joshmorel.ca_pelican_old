@@ -36,6 +36,17 @@ DEFAULT_PAGINATION = False
 # installed using pelican-themes -i /path/to/bootstrap2
 THEME = 'pelican-bootstrap3'
 
+
+
+#################### Plugin-Specific Settings #################
+
+PLUGIN_PATHS = ['plugins']
+PLUGINS = ['tag_cloud']
+DISPLAY_TAGS_ON_SIDEBAR = True
+
 # Uncomment following line if you want document-relative URLs when developing
 #RELATIVE_URLS = True
+
+
+
 
