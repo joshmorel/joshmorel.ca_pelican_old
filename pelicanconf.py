@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 AUTHOR = u'Josh Morel'
 SITENAME = u'Josh Morel'
-SITEURL = ''
+SITEURL = 'http://joshmorel.github.io'
 
 PATH = 'content'
 
@@ -33,10 +33,9 @@ SOCIAL = (('github', 'http://github.com/joshmorel'),
 DEFAULT_PAGINATION = False
 
 #################### Theme-Specific Settings #################
-# installed using pelican-themes -i /path/to/bootstrap2
+
 THEME = 'pelican-bootstrap3'
-
-
+DISQUS_SITENAME = 'joshmorel'
 
 #################### Plugin-Specific Settings #################
 
@@ -46,7 +45,4 @@ DISPLAY_TAGS_ON_SIDEBAR = True
 
 # Uncomment following line if you want document-relative URLs when developing
 #RELATIVE_URLS = True
-
-
-
 
