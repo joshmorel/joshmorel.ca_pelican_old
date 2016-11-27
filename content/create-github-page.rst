@@ -2,7 +2,7 @@ Create a GitHub Personal Page with Python
 #########################################
 
 :date: 2016-11-25 07:41
-:modified: 2016-11-25 7:41
+:modified: 2016-11-27 16:59
 :tags: python, pelican, github
 :category: I-want-to-
 :slug: create-a-github-personal-page-with-python
@@ -35,13 +35,13 @@ You can install Pelican with pip or your package manager on some Linux distribut
 
 On Ubuntu try:
 
-.. code-block:: bash
+.. code-block:: console
    
    sudo apt-get install python-pelican
 
 With pip (in Windows, for example):
 
-.. code-block:: bash
+.. code-block:: console
    
    pip install pelican
 
@@ -59,13 +59,13 @@ To create a GitHub pages site you need to at least create a new repository named
 
 Clone the source repo into a ghpages directory.
 
-.. code-block:: bash
+.. code-block:: console
    
    git clone https://www.github.com/you/you.github.io-src ghpages; cd ghpages
    
 Add the website repository as a `git submodule <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_ in the project's output directory.
 
-.. code-block:: bash
+.. code-block:: console
    
    git submodule add https://www.github.com/you/you.github.io output
 
@@ -74,7 +74,7 @@ Starting the Pelican Site Project
 
 You can easily get started with the pelican quickstart utility:
 
-.. code-block:: bash
+.. code-block:: console
    
    cd /path/to/ghpages
    pelican-quickstart
@@ -113,7 +113,7 @@ Building & Serving with HTTP
 
 Build the site using the *pelican* utility. I would recommend using the *-r* or *--autoreload* option which will auto-reload the site allowing you to edit documents and review changes without restarting pelican.
 
-.. code-block:: bash   
+.. code-block:: console
 
    cd /path/to/ghpages
    pelican content/ -r
@@ -122,7 +122,7 @@ Open a new shell session in a new terminal and start the Python simple HTTP serv
 
 In Python 2:
 
-.. code-block:: bash   
+.. code-block:: console
 
    cd /path/to/ghpages/output
    python -m SimpleHTTPServer
@@ -130,7 +130,7 @@ In Python 2:
 
 In Python 3:
 
-.. code-block:: bash
+.. code-block:: console
 
    cd /path/to/ghpages/output
    python -m http.server
@@ -161,18 +161,25 @@ Publishing
 
 Once you are satisfied you can kill both the HTTP and pelican services with CTRL+C.
 
+Before publishing, you want to generate the site again while including the publishconf.py settings. Based on our default set-up this will add absolute URLs which is important for various add-ons you may later want such as disqus comments.
+
+ .. code-block:: console
+
+   cd /path/to/ghpages
+   pelican content/ -s publishconf.py
+
 Add, commit & push the files in the output git submodule. 
 
- .. code-block:: bash   
+ .. code-block:: console
 
-   cd /path/to/ghpages/output
+   cd output
    git add .
    git commit -m "First post."
    git push -u origin master
 
 Once complete, do the same in the source repository.
 
- .. code-block:: bash   
+ .. code-block:: console
 
    cd ..
    echo '*.pyc' >> .gitignore #don't need pyc files
