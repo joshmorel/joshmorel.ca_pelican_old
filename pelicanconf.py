@@ -36,6 +36,7 @@ DEFAULT_PAGINATION = False
 
 THEME = 'pelican-bootstrap3'
 DISQUS_SITENAME = 'joshmorel'
+CC_LICENSE = 'CC-BY-SA'
 
 #################### Plugin-Specific Settings #################
 
@@ -45,4 +46,3 @@ DISPLAY_TAGS_ON_SIDEBAR = True
 
 # Uncomment following line if you want document-relative URLs when developing
 #RELATIVE_URLS = True
-
