@@ -8,6 +8,7 @@ Style my GitHub Page with Pelican-Themes
 :authors: Josh Morel
 :slug: style-my-github-page
 :summary: Step by step instructions for adding style to your GitHub Page with pelican themes
+:series: Pelican
 
 
 Background

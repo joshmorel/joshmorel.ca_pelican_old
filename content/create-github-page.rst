@@ -8,6 +8,7 @@ Create a GitHub Personal Page with Python
 :slug: create-a-github-personal-page-with-python
 :authors: Josh Morel
 :summary: Step by step instructions for creating a personal site hosted on github pages
+:series: Pelican
 
 
 Background

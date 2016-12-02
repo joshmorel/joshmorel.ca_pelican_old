@@ -41,7 +41,7 @@ CC_LICENSE = 'CC-BY-SA'
 #################### Plugin-Specific Settings #################
 
 PLUGIN_PATHS = ['pelican-plugins']
-PLUGINS = ['tag_cloud']
+PLUGINS = ['tag_cloud', 'series']
 DISPLAY_TAGS_ON_SIDEBAR = True
 
 # Uncomment following line if you want document-relative URLs when developing
