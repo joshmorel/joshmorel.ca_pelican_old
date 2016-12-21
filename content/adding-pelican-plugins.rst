@@ -3,7 +3,7 @@ Adding Pelican Plugins
 :date: 2016-12-02 18:38
 :modified: 2016-12-02 18:38
 :tags: python, pelican, github
-:category: I-want-to-
+:category: Web publishing
 :slug: adding-pelican-plugins
 :authors: Josh Morel
 :summary: Step by step instructions for adding a plugin or two to your pelican static site

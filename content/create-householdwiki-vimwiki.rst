@@ -3,7 +3,7 @@ Create a Household Wiki using Vimwiki
 :date: 2016-12-09 19:38
 :modified: 2016-12-09 19:38
 :tags: vim, vimwiki
-:category: I-want-to-
+:category: Private cloud 
 :slug: create-householdwiki-vimwiki
 :authors: Josh Morel
 :summary: Step by step instructions for initial set-up of for household wiki using Vimwiki

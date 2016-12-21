@@ -4,7 +4,7 @@ Create a GitHub Personal Page with Python
 :date: 2016-11-25 07:41
 :modified: 2016-11-27 16:59
 :tags: python, pelican, github
-:category: I-want-to-
+:category: Web publishing 
 :slug: create-a-github-personal-page-with-python
 :authors: Josh Morel
 :summary: Step by step instructions for creating a personal site hosted on github pages
@@ -157,7 +157,7 @@ Because you edited the .py files, you will need to restart pelican to see the ef
 
 You should see the links either at the bottom or side depending on the site's theme (with the current default, it will be at the bottom). Included are all the appropriate icons (awesome!).
 
-Publishing
+publishing
 ----------
 
 Once you are satisfied you can kill both the HTTP and pelican services with CTRL+C.
