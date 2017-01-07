@@ -1,12 +1,12 @@
-Install Nextcloud 11 on an Ubuntu 16.04 VM with MariaDB
-#######################################################
+Install Nextcloud 11 on an Ubuntu VM
+####################################
 :date: 2017-01-07 10:45
-:modified: 2017-01-07 10:45
+:modified: 2017-01-07 18:34
 :tags: nextcloud, linux, ubuntu, mariadb, apache, php
 :category: Private cloud 
 :slug: install-nextcloud-dev-vm
 :authors: Josh Morel
-:summary: Step-by-step instructions for installing Nextcloud with MariaDB with an Ubuntu 16.04 VM for development purposes.
+:summary: Step-by-step instructions for installing Nextcloud 11 on an Ubuntu 16.04 VM with Apache, MariaDB & PHP 7.0.
 
 Background
 ----------
@@ -158,7 +158,7 @@ At this point you can set up `ssh access <https://help.ubuntu.com/community/SSH/
 Install MariaDB
 ~~~~~~~~~~~~~~~
 
-MySQL and MariaDB should work equally well for Nextcloud. While MySQL remains the standard for the LAMP stack on Ubuntu (CentOS prefers MariaDB), I decided to use MariaDB for reasons similar to those outlined in this article: https://seravo.fi/2015/10-reasons-to-migrate-to-mariadb-if-still-using-mysql
+MySQL and MariaDB should work equally well for Nextcloud. While MySQL remains the standard for the LAMP stack on Ubuntu (CentOS prefers MariaDB), I decided to use MariaDB because it is a community-driven project with a `team that delivers quicker security updates `this article <described here <https://seravo.fi/2015/10-reasons-to-migrate-to-mariadb-if-still-using-mysql>`_.
 
 First, install the server & client packages:
 
@@ -248,8 +248,7 @@ Replace ``apassword`` with the password you will be using. This is required with
    GRANT ALL PRIVILEGES ON nextcloud . * TO oc_nextadmin@localhost;
    FLUSH PRIVILEGES;
 
-We will revisit the database during the final installation. Next we'll setup Apache.
-
+You can now ``exit`` as the Nextcloud install script will handle all other database tasks.
 
 Install & Set-up Apache
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -335,7 +334,7 @@ Confirm PHP-Apache integration:
 
    echo "<?php phpinfo(); ?>" | sudo tee /var/www/html/test.php
 
-Navigate to `cloud1.example.vm/php.info` in your KVM host's web browser. You should see something like: 
+Navigate to `<http://cloud1.example.vm/test.php>`_ in your KVM host's web browser. You should see something like:
 
 .. image:: {filename}/images/php_info.png
    :alt: image: PHP Info
@@ -406,8 +405,9 @@ Update the ``trusted_domains`` variable to:
    array (
      0 => 'localhost',
      1 => '192.168.122.20',
-     2 => 'cloud1.example.vm'
-   )
+     2 => 'cloud1.example.vm',
+   ),
+
 
 Finally, tell Apache to reload configurations:
 
