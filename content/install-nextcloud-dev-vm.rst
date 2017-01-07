@@ -1,32 +1,34 @@
-Trial Nextcloud VM  
-##################
-:date: 2016-12-20 19:38
-:modified: 2016-12-20 19:38
-:tags: nextcloud, linux
+Install Nextcloud 11 on an Ubuntu 16.04 VM with MariaDB
+#######################################################
+:date: 2017-01-07 10:45
+:modified: 2017-01-07 10:45
+:tags: nextcloud, linux, ubuntu, mariadb, apache, php
 :category: Private cloud 
 :slug: install-nextcloud-dev-vm
 :authors: Josh Morel
-:summary: Step by step instructions for installing NextCloud on a dev box.
+:summary: Step-by-step instructions for installing Nextcloud with MariaDB with an Ubuntu 16.04 VM for development purposes.
 
 Background
 ----------
 
-I my `previous article <{filename}/create-householdwiki-vimwiki.rst>`_ I described my first steps towards independence from Microsoft Office 365 with Vimwiki as a household wiki & note taker. This would act as a replacement for OneNote specifically.
+In my `previous article <{filename}/create-householdwiki-vimwiki.rst>`_ I described my first steps towards separation from Microsoft Office 365. Specifically, I outlined how to set-up Vimwiki for use as a OneNote replacement.
 
-Vimwiki is very good, but a true replacement requires a private cloud with which I can access, control and protect my data. The thing that I believe can meet that need is `Nextcloud <https://nextcloud.com/>`_.
+Vimwiki is very good, but a complete replacement requires a private cloud combined with a file sync-n-share application which can allow me to control and protect my data. The sync-n-share application I want to use is `Nextcloud <https://nextcloud.com/>`_. For a well written background on Nextcloud's origin check out `this article <https://serenity-networks.com/goodbye-owncloud-hello-nextcloud-the-aftermath-of-disrupting-open-source-cloud-storage/>`_.
 
-The first step is to install Nextcloud in a dev environment. The purpose is to gain comfort with the software while making better decisions for production use including architecture, system resources & add-on applications.
+My first major activity is to install and start using Nextcloud in a dev VM environment so I can gain some comfort with administering and using the application.
+
+This will be a quite a manual install compared to what is possible using the `snap package <https://www.linuxbabe.com/cloud-storage/install-nextcloud-server-ubuntu-16-04-via-snap>`_. However, I specifically want to take a deliberate approach for both my understanding and to facilitate customization.
 
 Prerequisites
 -------------
 
-At least some familiarity with installing Linux and working at the command line is assumed to continue. 
+At least some familiarity with installing Linux and working at the command line is assumed for following this tutorial.
 
-I completed the following using the Ubuntu Server 16.04 with LTS (Xenial Xerus). Download the ISO located here and follow along or try with a later LTS version: https://www.ubuntu.com/download/server
+I completed the following using the Ubuntu Server 16.04 with LTS (Xenial Xerus). Download the ISO located on the Ubuntu site or try with a later LTS version: https://www.ubuntu.com/download/server
 
-My guest desktop environment is `Kubuntu 16.04 <http://kubuntu.org/getkubuntu/>`_  with KVM installed following the instructions described here: https://help.ubuntu.com/community/KVM/Installation
+My guest desktop environment is `Kubuntu 16.04 <http://kubuntu.org/getkubuntu/>`_  with KVM installed as in the `these instructions <https://help.ubuntu.com/community/KVM/Installation>`_.
 
-You should be able to achieve the same using `Virtual Box <https://www.virtualbox.org/>`_ on Windows, Mac and most Linux distros using largely similar steps.
+You should be able to achieve the same using `Virtual Box <https://www.virtualbox.org/>`_ on Windows, Mac and most Linux distros following roughly similar steps.
 
 VM Set-up
 ~~~~~~~~~
@@ -39,52 +41,50 @@ Open the KVM Virtual Machine Manager GUI:
 
 In the GUI Click the **Create a new virtual machine** button.
 
-**Step 1**: Leave the default as *Local install media (ISO image or CDROM)* and continue.
+.. image:: {filename}/images/kvm_create.png
+   :alt: image: KVM Create New
 
-**Step 2**: Select the *Use ISO image:* option and type or paste the path to the  downloaded ISO image and continue.
+------
 
-INSERT PICTURE HERE
+Creating the VM is a fairly straight-forward five step process:
 
-**Step 3**: Leave the defaults to "1024" *MiB* and "1" *CPUs*.
+1. Leave the default as *Local install media (ISO image or CDROM)* and continue.
 
-INSERT PICTURE HERE
+2. Select the *Use ISO image:* option and type or paste the path to the downloaded ISO image and continue.
 
-This will definitely be important when considering where you will host your production environment. If with a cloud provider (as opposed to at home with a VPN), doubling the RAM will double your monthly cost, so you will want to play around with this and see what works for your needs.
+3. Leave the defaults to "1024" *MiB* and "1" *CPUs*. The *RAM* will become quite important later as you make decisions for production deployment as it will drive cloud provider costs but for now this should be fine.
 
-INSERT PICTURE HERE
+4. Use default *Create a disk image for the virtual machine*. For initial development purposes I will only use 20.0 GiB.
 
-**Step 4**: Use default *Create a disk image for the virtual machine*. For initial development purposes I will only use 20.0 GiB. 
-
-INSERT PICTURE HERE
-
-**Step 5**: Give it a meaningful name, I'll use "cloud1", and click finish.
-
-INSERT PICTURE HERE
+5. Give it a meaningful name, I'll use "cloud1", and click finish.
 
 KVM should open a console immediately to begin the install.
+
+In production, choices for both storage and RAM will become quite important. But at this point we can make more arbitrary choices as get used to the application.
 
 Installing the OS
 ~~~~~~~~~~~~~~~~~
 
-Instead of going through every Ubuntu install screen here I will point you in the direction of this tutorial on howtoforge: https://www.howtoforge.com/tutorial/ubuntu-16.04-xenial-xerus-minimal-server/
+Instead of going through every Ubuntu install screen here I will point you in the direction of `this tutorial on howtoforge <https://www.howtoforge.com/tutorial/ubuntu-16.04-xenial-xerus-minimal-server/>`_.
 
 The only major difference is that we will be using "cloud1.example.vm" for the *hostname*.
  
 Also, you can skip **8. Configure the Network** as I'll be covering that part explicitly in the next section.
 
-Note that we could install the entire LAMP (Linux, Apache, MySQL, PHP) stack during the Ubuntu install **Software selection** step. This would be a simpler experience but I'll be doing each install & configuration deliberately for control, understanding and also because I want MariaDB (I'll describe why later).
+Note that we could install the entire LAMP (Linux, Apache, MySQL, PHP) stack during the Ubuntu install **Software selection** step. This would be a simpler experience but I'll be doing each install & configuration deliberately for understanding & customization (particularly with regards to use of MariaDB).
 
-Network Setup
-~~~~~~~~~~~~~
-
-Before continuing with the network setup, we should upgrade the packages installed from the distribution's ISO: 
+Once the install is complete, but before continuing with the network setup, we should upgrade the packages installed from the distribution's ISO. Note that this this may take some time.
 
 .. code-block:: console
 
    sudo apt update
    sudo apt upgrade
 
-KVM will give us a dynamic IP but we need a static one for our server. 
+
+Network Setup
+~~~~~~~~~~~~~
+
+KVM will give us a dynamic IP but we need a static one for our server.
 
 The KVM NAT network is `192.168.122.0` and the guest's interface name is `ens3`. If these are  different for you please make the appropriate substitutions.
 
@@ -94,7 +94,7 @@ Edit the network interfaces file:
 
    sudoedit /etc/network/interfaces
 
-Update the description following the commented line `# The primary network interface`: 
+Update the interface description which follows the commented line "``# The primary network interface``":
  
 .. code-block:: console
 
@@ -106,7 +106,6 @@ Update the description following the commented line `# The primary network inter
            broadcast 192.168.122.255
            gateway 192.168.122.1
            dns-nameservers 8.8.8.8 8.8.4.4
-
 
 Restart the networking service:
 
@@ -128,13 +127,13 @@ From the host:
 
    ping 192.168.122.20
 
-In production we will rely on DNS, but for initial development we will add an entry in the `hosts` file of the our KVM **host** for static hostname look-up:
+In production we will rely on DNS, but for initial development we will add an entry in the `hosts` file of the KVM **host** for static hostname look-up:
 
 .. code-block:: console
 
    sudoedit /etc/hosts
 
-Add this entry:
+Add this line:
 
 .. code-block:: console
 
@@ -159,7 +158,7 @@ At this point you can set up `ssh access <https://help.ubuntu.com/community/SSH/
 Install MariaDB
 ~~~~~~~~~~~~~~~
 
-MySQL and MariaDB should work equally well for Nextcloud. While MySQL remains the standard for the LAMP stack on Ubuntu (CentOS prefers MariaDB), I decided to use MariaDB for reasons outlined in this article: https://seravo.fi/2015/10-reasons-to-migrate-to-mariadb-if-still-using-mysql 
+MySQL and MariaDB should work equally well for Nextcloud. While MySQL remains the standard for the LAMP stack on Ubuntu (CentOS prefers MariaDB), I decided to use MariaDB for reasons similar to those outlined in this article: https://seravo.fi/2015/10-reasons-to-migrate-to-mariadb-if-still-using-mysql
 
 First, install the server & client packages:
 
@@ -189,7 +188,7 @@ This is not necessary for MariaDB on Ubuntu 16.04 as:
 Set-up MariaDB for Nextcloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First we need to configure MariaDB so it will work for Nextcloud. We will create a specific config file and hopefully comments make what is being done self-explanatory. To find out **why**, see:   https://docs.nextcloud.com/server/11/admin_manual/configuration_database/linux_database_configuration.html
+First we need to configure MariaDB so it will work for Nextcloud. We will create a specific config file with (hopefully) self-explanatory comments as to **what** is being done. To find out **why**, see:   https://docs.nextcloud.com/server/11/admin_manual/configuration_database/linux_database_configuration.html
 
 Create in:
 
@@ -229,7 +228,7 @@ Login as root:
 
 Verify variables reflect the configuration file created above:
 
-.. code-block:: sql
+.. code-block:: mysql
    
    SHOW GLOBAL VARIABLES LIKE 'log_bin';
    SHOW GLOBAL VARIABLES LIKE 'tx_isolation';
@@ -238,11 +237,11 @@ Verify variables reflect the configuration file created above:
    SHOW GLOBAL VARIABLES LIKE 'innodb_file_per_table';
 
 
-Create the database and user. We will call the user ``oc_nextadmin`` in alignment with the use of the ``oc_`` prefix for all tables (note: oc stands for OwnCloud the project Nextcloud was forked from). 
+Create the database and user. We will call the user ``oc_nextadmin`` in alignment with the use of the ``oc_`` prefix for all tables (note: oc stands for ownCloud the project Nextcloud was forked from).
 
-Replace ``apassword`` with the password you will be using. This is required with a subsequent install step, however, you will only need to use use the application administrator password.
+Replace ``apassword`` with the password you will be using. This is required with a subsequent install step, however, for regular use you will only need to use use the application administrator password.
 
-.. code-block:: sql
+.. code-block:: mysql
 
    CREATE DATABASE nextcloud CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
    CREATE USER oc_nextadmin@localhost IDENTIFIED BY 'apassword';
@@ -275,7 +274,7 @@ Create the Nextcloud site config file
 
    sudoedit /etc/apache2/sites-available/nextcloud.conf
 
-With the following content as recommended in the `Nextcloud installation manual <https://docs.nextcloud.com/server/11/admin_manual/installation/source_installation.html#apache-web-server-configuration>`_:
+Add these lines as recommended in the `Nextcloud installation manual <https://docs.nextcloud.com/server/11/admin_manual/installation/source_installation.html#apache-web-server-configuration>`_:
 
 .. code-block:: aconf
 
@@ -338,7 +337,10 @@ Confirm PHP-Apache integration:
 
 Navigate to `cloud1.example.vm/php.info` in your KVM host's web browser. You should see something like: 
 
-ADD PICTURE HERE
+.. image:: {filename}/images/php_info.png
+   :alt: image: PHP Info
+
+----
 
 You don't need the file anymore so remove it.
 
@@ -350,70 +352,28 @@ You don't need the file anymore so remove it.
 Download & Install Nextcloud 11
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-I'm downloading Nextcloud 11.0.0. You should their `download page <https://nextcloud.com/install/#instructions-server>`_ for a later stable version and consider that if available.
+I'm downloading Nextcloud 11.0.0. You should go to `the Nextcloud download site <https://nextcloud.com/install/#instructions-server>`_ and download the latest stable version. I downloaded the ``.tar.bz2`` archive although there is also a ``.zip`` archive.
 
-Make a downloads directory and move into it: 
+Verify the integrity of the file then expand the archive to the Apache server directory.
 
-.. code-block:: console
-
-   mkdir downloads; cd downloads;
-
-We will download the archive as well as the certificates and checksum. Replace "11.0.0" with a later version as desired.
-
-.. code-block:: console
-
-   wget https://nextcloud.com/nextcloud.asc
-   wget https://download.nextcloud.com/server/releases/nextcloud-11.0.0.tar.bz2.asc
-   wget https://download.nextcloud.com/server/releases/nextcloud-11.0.0.tar.bz2.sha256
-   wget https://download.nextcloud.com/server/releases/nextcloud-11.0.0.tar.bz2
-
-Verify checksum integrity:
-
-.. code-block:: console
-
-   sha256sum -c nextcloud-11.0.0.tar.bz2.sha256 < nextcloud-11.0.0.tar.bz2
-
-You should see:
-
-.. code-block:: console
-   
-   nextcloud-11.0.0.tar.bz2: OK
-
-Confirm PGP signature:
-
-.. code-block:: console
-
-   gpg --import nextcloud.asc
-   gpg --verify nextcloud-11.0.0.tar.bz2.asc nextcloud-11.0.0.tar.bz2
-
-You should see a response including these lines:
-
-.. code-block:: console
-   
-   gpg: Good signature from "Nextcloud Security <security@nextcloud.com>"
-   gpg: WARNING: This key is not certified with a trusted signature!
-   gpg:          There is no indication that the signature belongs to the owner.
-
-Expand the archive, changing the output destination to the web server directory. Note the ``v`` flag is for verbose and is optional. 
+Replace ``11.0.0`` with whatever version you downloaded. Note the ``v`` - verbose - flag is optional.
 
 .. code-block:: console
 
    sudo tar -xvjf nextcloud-11.0.0.tar.bz2 -C /var/www/
 
-Temporarily change the owner of the Nextcloud directory to the HTTP user then move there to run the command line installation.
+Temporarily change the owner of the Nextcloud directory to the HTTP user.
 
 .. code-block:: console
 
    sudo chown -R www-data:www-data /var/www/nextcloud/
 
+
+Run the command line installation as the HTTP user from that directory. Of course, change the capitalized passwords to your own. Note again that you will need to use the ``admin-pass`` regularly but not the ``database-pass``.
+
 .. code-block:: console
 
    cd /var/www/nextcloud/
-
-Run the command line installation as the HTTP user, changing the capitalized passwords to your own. Note again that you will need to use the ``admin-pass`` regularly but not the ``database-pass``.
-
-.. code-block:: console
-
    sudo -u www-data php occ maintenance:install \
    --database "mysql" --database-name "nextcloud" \
    --database-user "oc_nextadmin" --database-pass "DBPASS" \
@@ -432,13 +392,13 @@ Final Server Configuration Pieces
 
 Harden the security of the server as recommended in the `Nextcloud manual <https://docs.nextcloud.com/server/11/admin_manual/installation/installation_wizard.html#strong-perms-label>`_.
 
-Finally, add the host name and static IP to the by editing the config file:
+The last installation step is to add the host name and static IP by editing the php config file:
 
 .. code-block:: console
 
    sudoedit /var/www/nextcloud/config/config.php
 
-Update the ``trusted_domains`` variable as follows:
+Update the ``trusted_domains`` variable to:
 
 .. code-block:: php
 
@@ -449,7 +409,7 @@ Update the ``trusted_domains`` variable as follows:
      2 => 'cloud1.example.vm'
    )
 
-Let apache reload its configurations.
+Finally, tell Apache to reload configurations:
 
 .. code-block:: console
 
@@ -458,15 +418,28 @@ Let apache reload its configurations.
 Install Confirmation & Login
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-From your KVM host's web browser navigate to https://cloud1.example.vn/nextcloud
+From your KVM host's web browser navigate to https://cloud1.example.vm/nextcloud
 
-Since your SSL certificate is not signed by a certificate authority your browser should tell you the connection is not secure. 
+Since your SSL certificate is not signed by a certificate authority your browser should tell you something like:
 
-ADD PICTURE
+.. image:: {filename}/images/firefox_notsecure.png
+   :alt: image: Firefox not secure
 
-Add the exception and continue. 
+----
 
-You should see a login screen where you should enter the app admin info and click "Log in".
+In Firefox, for example, click "Advanced" > "Add Exception..." > "Confirm Security Exception".
 
-If you see this final picture you've succeeded! Now you can go ahead and try it out - add some users and play around with files. You'll want to start syncing with a `client <https://nextcloud.com/install/#install-clients>`_ to really test it. In future articles I plan to write more on getting into production. 
+When in production, you may want to consider `Let's Encrypt <https://letsencrypt.org/>`_
 
+You should see a login screen where you can enter your app admin info and click "Log in".
+
+If you see this final picture you've succeeded!
+
+.. image:: {filename}/images/nextcloud_success.png
+   :alt: image: Nextcloud successful install
+
+----
+
+Now you can go ahead and try it out - add some users and play around with file management. You'll want to start syncing with a `client <https://nextcloud.com/install/#install-clients>`_ to really test it out.
+
+In future articles I plan to write on Nextcloud production options.
