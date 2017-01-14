@@ -1,30 +1,30 @@
-Install and Setup Nextcloud Clients
-###################################
+Install and Use Nextcloud Desktop Clients
+#########################################
 :date: 2017-01-07 10:45
 :modified: 2017-01-07 18:34
 :tags: nextcloud, linux, ubuntu
 :category: Private cloud 
-:slug: install-client-nextcloud-ubuntu-desktop
+:slug: install-nextcloud-clients
 :authors: Josh Morel
-:summary: Step-by-step instructions for installing a desktop client for Nextcloud on Ubuntu
+:summary: Step-by-step instructions for installing & using Nextcloud clients
 
 Background
 ----------
 
-In the `first article in this series <{filename}/install-ubuntu-desktop-client-for-nextcloud.rst>`_ I described how to to install Nextcloud on Ubuntu 16.04 server. To actually use Nextcloud you need one, or more likely multiple, clients.
+In the `first article in this series <{filename}/install-nextcloud-dev-vm.rst>`_ I described how to to install Nextcloud on Ubuntu 16.04. To actually make use of Nextcloud's sync-n-share capabilities you need a few clients.
 
 In this article I will cover:
 
-1. Enabling port forwarding to utilize the Nextcloud server
-2. Installing and using the Nextcloud client on Ubuntu, Windows AND Android
+1. Enabling port forwarding to utilize the dev Nextcloud server I've installed on a VM
+2. Installing and using the Nextcloud clients on Ubuntu and Windows
 3. Architecting a production-ready solution with docker
 
-Port Forwording for the Win
----------------------------
+Port Forwarding with firewalld
+------------------------------
 
-I am still in a dev scenario with Nextcloud so I will use my VM installed in the previous article. It's being hosted on my Kubuntu Desktop, so if I want to access it from Windows or Android I'll need to set-up port-forwarding.
+To make requests to the Nextcloud server on my VM from devices other than the host, I need to set up port-forwarding on my Kubuntu Desktop host.
 
-I'm going to use `firewalld <http://www.firewalld.org/>`_ but this is, of course, possible with `iptables <https://www.netfilter.org/projects/iptables/index.html>`_ directly or with another firewall management program.
+I'm going to use `firewalld <http://www.firewalld.org/>`_ but you can use `iptables <https://www.netfilter.org/projects/iptables/index.html>`_ and/or `ufw <https://help.ubuntu.com/community/UFW>`_ commands or some other firewall management program.
 
 firewalld comes with CentOS by default but for Ubuntu we need to install it.
 
@@ -32,11 +32,11 @@ firewalld comes with CentOS by default but for Ubuntu we need to install it.
 
    sudo apt install firewalld
 
-I'm going to make a bunch of changes to the firewalls, so if you're following along you can make it permanent with the **--permanent** flag in each.
+An excellent introduction to ``firewalld`` is available through this `Digital Ocean article <https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7>`_
 
-First, let's set the default zone to ``home`` and add both my real & virtual NICs:
+My objective is to forward http/https requests sent to my Kubuntu Desktop (192.168.0.10) to the Nextcloud VM (192.168.122.30). If this were a long term thing we'd want to make my Desktop IP static, but because this is just for trial purposes I'll skip that step.
 
-It is VERY IMPORTANT TO NOTE that I'm making permanent changes here. But one of the huge benefits of firewalld is that by default the changes are temporary.
+First, let's set the default zone from ``public`` to ``home``.
 
 .. code-block:: console
 
@@ -44,147 +44,148 @@ It is VERY IMPORTANT TO NOTE that I'm making permanent changes here. But one of 
    sudo firewall-cmd --permanent --add-interface={enp4s0,virbr0}
    sudo firewall-cmd --add-interface=enp4s0 #what about multiple?
 
-
-
-Okay, so on home network my Kubuntu IP is 192.168.0.10. I want all http & https traffic forwarded from this IP to my Nextcloud VM which is 192.168.122.30.
-
-Note we really are only interested in 443/https BUT i like to do both because for now,.
-
-We need to enable the required services & ports.
-
-?? look into --runtime-to-permanent
+Let's add the required services and port/protocols.
 
 .. code-block:: console
 
    sudo firewall-cmd --add-service={http,https}
    sudo firewall-cmd --add-port={80/tcp,443/tcp}
 
-
-Add masquerading & port forwarding and finally reload the settings.
-
+We will enable masquerading to allow our system to forward packages, then add the specific port-forwarding rules for http/https.
 
 .. code-block:: console
 
    sudo firewall-cmd --add-masquerade
-   sudo firewall-cmd --add-forward-port=port=443:proto=tcp:toaddr=192.168.122.30
-   sudo firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=192.168.122.30
+   sudo firewall-cmd --add-forward-port=port={80,443}:proto=tcp:toaddr=192.168.122.30
+
+By running ``firewall-cmd --list-all`` you should see something like:
+
+.. code-block:: console
+
+   home (default, active)
+     interfaces: enp4s0 virbr0
+     sources:
+     services: dhcpv6-client http https mdns samba-client ssh
+     ports: 80/tcp 443/tcp
+     protocols:
+     masquerade: yes
+     forward-ports: port=80:proto=tcp:toport=:toaddr=192.168.122.30
+           port=443:proto=tcp:toport=:toaddr=192.168.122.30
+     icmp-blocks:
+     rich rules:
 
 
-    #forward port-based traffic to other ip e.g. =port=80:proto=tcp:toaddr=192.168.122.30
+Verify Port-forwarding with Windows
+-----------------------------------
 
-Verify & Test With Windows
---------------------------
+I'm verifying the firewall settings are correct with my Windows laptop on the same home network. This is, of course, possible with Linux or Mac, just substitute the step for updating the static hosts file.
 
-We will verify the firewall settings are correct with my Windows laptop on the same home network. This is, of course, possible with Linux or Mac, just update the corresponding static hosts file.
+First, let's make sure port-forwarding is working.
 
-First, let's make sure the VM will respond.
+Enter this url in any web browser: http://192.168.122.30
 
-Enter hte following in a browser:
+If nothing has been disabled, you should see the `Apache2 Ubuntu Default Page <https://www.linux.com/learn/apache-ubuntu-linux-beginners>`_
 
-http://192.168.122.30
+But for Nextcloud to work you need use the hostname because 192.168.0.10 is not one of Nextcloud's trusted domains.
 
-If nothing has been disabled, you should see the `Apache2 Ubuntu Default Page`: https://www.linux.com/learn/apache-ubuntu-linux-beginners
-
-But for nextcloud to work, you need to add the following line to "C:\Windows\System32\drivers\etc\hosts\" as an administrator using your favourite Windows text editor:
+In Windows, we do this by appending the following line to "C:\Windows\System32\drivers\etc\hosts":
 
 .. code-block:: console
 
    192.168.0.10 cloud1.example.vm
 
-
 Now, in a browser, enter https://cloud1.example.vm/nextcloud
 
-You should see a log-in page if all is succesful:
+You will need to add the security certificate exception as we did in the `previous article <{filename}/install-nextcloud-dev-vm.rst>`_
 
-ADD PICTURE HERE::::
+If successful, you should see a login page. Leave this open as we'll be using it later.
 
-
-When your happy, return to the Kubuntu desktop and make the firewall pieces permanent by:
-
-To make it permanent do this:
+Back on the Ubuntu VM host, if you want, you can make the firewall changes permanent. If not the settings will be be reset at the next system reboot.
 
 .. code-block:: console
 
    sudo firewall-cmd --runtime-to-permanent
 
+Create a Non-Admin User
+-----------------------
 
-NOW, it's up to you because obviously, for production purposes a VM is not an option (we'll get to that later).
+If you haven't yet. You should create a non-admin Nextcloud user. Log in as ``nextadmin``.
+
+Click on "nextadmin" in the top-right corner and select "Users". The first line on the "Users" page allows you to create a new user very easily:
+
+.. image:: {filename}/images/nextcloud_create_user.png
+   :alt: image: Nextcloud create user
+
+----
+
+Let's create a user called "cloudboy" and give him a password. You can also create groups but we won't bother with that now.
+
+Try logging out then back in as "cloudboy" to confirm it worked.
+
 
 Client Install & Usage -- Windows
 ---------------------------------
 
-With the hosts file updated, everything else in Windows hould be super straight forward.
+We already updated the host file, so everything else in Windows will be super straight forward.
 
 Go to https://nextcloud.com/install/#install-clients
 
-click "Windows". This will download the executable. When the download is done double-click to begin the install.
+click "Windows". This will download the executable. When the download is done double-click to begin the install and complete the install with all the default options selected. A succesful install should end with the launch of a "Nextcloud Connection Wizard":
 
-Finish the install.
+.. image:: {filename}/images/nextcloud_wizard_address.png
+   :alt: image: Nextcloud connection wizard address
 
-NEED TO REMOVE SETTINGS !!!!
+----
+
+Enter the URL: https://cloud1.example.vm/nextcloud
+
+You will need to accept the untrusted certificate then enter cloudboy's username and password.
+
+The installer will ask you what to sync. You can keep or change the defaults. Once this is done, the files should be downloaded in the local folder.
 
 
+.. image:: {filename}/images/nextcloud_wizard_sync.png
+   :alt: image: Nextcloud connection wizard sync options
 
-1. Change the default
+----
 
-In my last article I gave my Nextcloud server an IP of 192.168.122.30
+Try adding files through both the web interface and local filesystem. It should all be very intuitive.
+
 
 Client Install & Usage -- Ubuntu
 --------------------------------
 
+At the time of this writing, there is no installable Nextcloud binary for Ubuntu. I was able to install from source after some mucking about with dependencies and other troubleshooting but I wouldn't recommend it.
 
+Let's instead use the ownCloud client available through the Ubuntu package repository which works just fine with the Nextcloud server (for now). As the projects diverge this may change, but hopefully at that point there we can easily install a Nextcloud client on Ubuntu.
 
-
-Installing the client on my Windows Laptop and Android Phone was super straight-forward with instructions available from Nextcloud's installs page: https://nextcloud.com/install/#install-clients.
-
-Installation the client on Ubuntu was not straight forward, unfortunately. At the time of this writing the instructions involve cloning the Nextcloud client repo which has the ownCloud client repo as a submodule. The install involves building the ownCloud client from source while applying the Nextcloud theming.
-
-After figuring out all the dependencies and troubleshooting a few items I was able to get the ownCloud client installed and working, but... without the theming.
-
-This process was ugly so for writing this article I decided to start from scratch. I will install the ownCloud client from the a package repo then demonstrate connectivity. Finally, I will provide optional steps for theming.
-
-Note: This article may quickly become obsolete once a Nextcloud client is made available through the Ubuntu repos.
-
-
-Install ownCloud Client
------------------------
-
-`ownCloud <https://owncloud.org/>`_ is the project from which Nextcloud was forked. For more on that whole story check out `this article <https://serenity-networks.com/goodbye-owncloud-hello-nextcloud-the-aftermath-of-disrupting-open-source-cloud-storage/>`_.
-
-Info on how to install for different distributions is available on the openSuse website: https://software.opensuse.org/download/package?project=isv:ownCloud:desktop&package=owncloud-client
-
-This will cover the necessary steps for *Ubuntu 16.04* but the instructions are provided at your own risk so I would visiting the web page to preview what you will be doing none-the-less.
-
-Add the package resource list from the repository
+If you want some background on the `ownCloud <https://owncloud.org/>`_ and Nextcloud split check out `this article <https://serenity-networks.com/goodbye-owncloud-hello-nextcloud-the-aftermath-of-disrupting-open-source-cloud-storage/>`_.
 
 .. code-block:: console
-
-   sudo sh -c "echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/desktop/Ubuntu_16.04/ /' > /etc/apt/sources.list.d/owncloud-client.list"
-
-
-Update your repository lists:
-
-.. code-block:: console
-
-   sudo apt update
-
-You will get an error indicating that the signature couldn't be verified. I'm okay with this as I only plan on installing this one package from the repo. You can add the key for the repo but there are some risks so make that decision on your own.
-
-.. code-block:: console
-
-   W: GPG error: http://download.opensuse.org/repositories/isv:/ownCloud:/desktop/Ubuntu_16.04  Release: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY 4ABE1AC7557BEFF9
-   E: The repository 'http://download.opensuse.org/repositories/isv:/ownCloud:/desktop/Ubuntu_16.04  Release' is not signed.
-   N: Updating from such a repository can't be done securely, and is therefore disabled by default.
-   N: See apt-secure(8) manpage for repository creation and user configuration details.
-
-Finally, install from the repo:
 
    sudo apt install owncloud-client
 
+On next reboot, the client will run automatically. Until then, you can run ``owncloud`` from the console or find the client in the start menu:
 
-Client Install & Usage -- Android
----------------------------------
+.. image:: {filename}/images/owncloud_start.png
+   :alt: image: Owncloud in start menu
 
-Let's also do it in Android!!!!
+----
 
+You will be presented with the "ownCloud Connection Wizard". Not surprisingly, the steps are much the same as the Nextcloud Windows client:
+
+.. image:: {filename}/images/owncloud_wizard_address.png
+   :alt: image: Nextcloud connection wizard address
+
+----
+
+1. Enter the URL - https://cloud1.example.vm/nextcloud
+2. Accept the untrusted certificate
+3. Enter cloudboy's username and password
+4. Accept or modify the syncing defaults
+
+Try changing or adding files on one device and you **should** see the file downloaded on the other device very quickly!
+
+Architecture for Production - Docker
+------------------------------------
 
