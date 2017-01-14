@@ -1,5 +1,5 @@
-Install Client for Nextcloud on Ubuntu Desktop
-##############################################
+Install and Setup Nextcloud Clients
+###################################
 :date: 2017-01-07 10:45
 :modified: 2017-01-07 18:34
 :tags: nextcloud, linux, ubuntu
@@ -11,7 +11,129 @@ Install Client for Nextcloud on Ubuntu Desktop
 Background
 ----------
 
-In the `first article in this series <{filename}/install-ubuntu-desktop-client-for-nextcloud.rst>`_ I described how to to install Nextcloud on Ubuntu 16.04 server. To actuall use Nextcloud you need one (or more) clients.
+In the `first article in this series <{filename}/install-ubuntu-desktop-client-for-nextcloud.rst>`_ I described how to to install Nextcloud on Ubuntu 16.04 server. To actually use Nextcloud you need one, or more likely multiple, clients.
+
+In this article I will cover:
+
+1. Enabling port forwarding to utilize the Nextcloud server
+2. Installing and using the Nextcloud client on Ubuntu, Windows AND Android
+3. Architecting a production-ready solution with docker
+
+Port Forwording for the Win
+---------------------------
+
+I am still in a dev scenario with Nextcloud so I will use my VM installed in the previous article. It's being hosted on my Kubuntu Desktop, so if I want to access it from Windows or Android I'll need to set-up port-forwarding.
+
+I'm going to use `firewalld <http://www.firewalld.org/>`_ but this is, of course, possible with `iptables <https://www.netfilter.org/projects/iptables/index.html>`_ directly or with another firewall management program.
+
+firewalld comes with CentOS by default but for Ubuntu we need to install it.
+
+.. code-block:: console
+
+   sudo apt install firewalld
+
+I'm going to make a bunch of changes to the firewalls, so if you're following along you can make it permanent with the **--permanent** flag in each.
+
+First, let's set the default zone to ``home`` and add both my real & virtual NICs:
+
+It is VERY IMPORTANT TO NOTE that I'm making permanent changes here. But one of the huge benefits of firewalld is that by default the changes are temporary.
+
+.. code-block:: console
+
+   sudo firewall-cmd --set-default-zone=home
+   sudo firewall-cmd --permanent --add-interface={enp4s0,virbr0}
+   sudo firewall-cmd --add-interface=enp4s0 #what about multiple?
+
+
+
+Okay, so on home network my Kubuntu IP is 192.168.0.10. I want all http & https traffic forwarded from this IP to my Nextcloud VM which is 192.168.122.30.
+
+Note we really are only interested in 443/https BUT i like to do both because for now,.
+
+We need to enable the required services & ports.
+
+?? look into --runtime-to-permanent
+
+.. code-block:: console
+
+   sudo firewall-cmd --add-service={http,https}
+   sudo firewall-cmd --add-port={80/tcp,443/tcp}
+
+
+Add masquerading & port forwarding and finally reload the settings.
+
+
+.. code-block:: console
+
+   sudo firewall-cmd --add-masquerade
+   sudo firewall-cmd --add-forward-port=port=443:proto=tcp:toaddr=192.168.122.30
+   sudo firewall-cmd --add-forward-port=port=80:proto=tcp:toaddr=192.168.122.30
+
+
+    #forward port-based traffic to other ip e.g. =port=80:proto=tcp:toaddr=192.168.122.30
+
+Verify & Test With Windows
+--------------------------
+
+We will verify the firewall settings are correct with my Windows laptop on the same home network. This is, of course, possible with Linux or Mac, just update the corresponding static hosts file.
+
+First, let's make sure the VM will respond.
+
+Enter hte following in a browser:
+
+http://192.168.122.30
+
+If nothing has been disabled, you should see the `Apache2 Ubuntu Default Page`: https://www.linux.com/learn/apache-ubuntu-linux-beginners
+
+But for nextcloud to work, you need to add the following line to "C:\Windows\System32\drivers\etc\hosts\" as an administrator using your favourite Windows text editor:
+
+.. code-block:: console
+
+   192.168.0.10 cloud1.example.vm
+
+
+Now, in a browser, enter https://cloud1.example.vm/nextcloud
+
+You should see a log-in page if all is succesful:
+
+ADD PICTURE HERE::::
+
+
+When your happy, return to the Kubuntu desktop and make the firewall pieces permanent by:
+
+To make it permanent do this:
+
+.. code-block:: console
+
+   sudo firewall-cmd --runtime-to-permanent
+
+
+NOW, it's up to you because obviously, for production purposes a VM is not an option (we'll get to that later).
+
+Client Install & Usage -- Windows
+---------------------------------
+
+With the hosts file updated, everything else in Windows hould be super straight forward.
+
+Go to https://nextcloud.com/install/#install-clients
+
+click "Windows". This will download the executable. When the download is done double-click to begin the install.
+
+Finish the install.
+
+NEED TO REMOVE SETTINGS !!!!
+
+
+
+1. Change the default
+
+In my last article I gave my Nextcloud server an IP of 192.168.122.30
+
+Client Install & Usage -- Ubuntu
+--------------------------------
+
+
+
 
 Installing the client on my Windows Laptop and Android Phone was super straight-forward with instructions available from Nextcloud's installs page: https://nextcloud.com/install/#install-clients.
 
@@ -60,9 +182,9 @@ Finally, install from the repo:
    sudo apt install owncloud-client
 
 
-Client Usage
-------------
+Client Install & Usage -- Android
+---------------------------------
+
+Let's also do it in Android!!!!
 
 
-The client can be opened by Open the client
-The client is set to run on startup so you can reboot.
