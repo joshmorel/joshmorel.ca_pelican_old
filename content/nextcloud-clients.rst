@@ -1,12 +1,13 @@
-Install and Use Nextcloud Desktop Clients
-#########################################
-:date: 2017-01-07 10:45
-:modified: 2017-01-07 18:34
-:tags: nextcloud, linux, ubuntu
+Sync-n-Share with Nextcloud Desktop Clients
+###########################################
+:date: 2017-01-15 8:15
+:modified: 2017-01-15 8:15
+:tags: nextcloud, ubuntu, iptables
 :category: Private cloud 
-:slug: install-nextcloud-clients
+:slug: nextcloud-clients
 :authors: Josh Morel
-:summary: Step-by-step instructions for installing & using Nextcloud clients
+:summary: Step-by-step instructions to use Nextcloud for syncing & sharing across multiple devices on your home network
+:series: Nextcloud
 
 Background
 ----------
@@ -19,74 +20,63 @@ In this article I will cover:
 2. Installing and using the Nextcloud clients on Ubuntu and Windows
 3. Architecting a production-ready solution with docker
 
-Port Forwarding with firewalld
-------------------------------
+Port Forwarding
+---------------
 
-To make requests to the Nextcloud server on my VM from devices other than the host, I need to set up port-forwarding on my Kubuntu Desktop host.
+To make requests to the Nextcloud server on my VM from other devices on my home network, I need to set up port-forwarding on my the VM host.
 
-I'm going to use `firewalld <http://www.firewalld.org/>`_ but you can use `iptables <https://www.netfilter.org/projects/iptables/index.html>`_ and/or `ufw <https://help.ubuntu.com/community/UFW>`_ commands or some other firewall management program.
+I'm going to use `iptables <https://www.netfilter.org/projects/iptables/index.html>`_ but other firewall management programs can be used as well.
 
-firewalld comes with CentOS by default but for Ubuntu we need to install it.
+My objective is to forward http/https requests sent to my Kubuntu Desktop (192.168.0.10) from other home network devices to the Nextcloud VM (192.168.122.30).
 
-.. code-block:: console
+Because my desktop is routing traffic from the VM network (192.168.122.0/24) I will already have some ``iptables`` rules enabled. Because this is just for temporary development usage, it's easier to flush (delete) the rules instead of trying to work with them (note: this will prevent your VMs from connecting to the internet).
 
-   sudo apt install firewalld
-
-An excellent introduction to ``firewalld`` is available through this `Digital Ocean article <https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-firewalld-on-centos-7>`_
-
-My objective is to forward http/https requests sent to my Kubuntu Desktop (192.168.0.10) to the Nextcloud VM (192.168.122.30). If this were a long term thing we'd want to make my Desktop IP static, but because this is just for trial purposes I'll skip that step.
-
-First, let's set the default zone from ``public`` to ``home``.
+When I reboot the machine, KVM will put those rules back in place so these changes will not be permanent. But, if you want, you can save the rules to file so you can restore without rebooting:
 
 .. code-block:: console
 
-   sudo firewall-cmd --set-default-zone=home
-   sudo firewall-cmd --permanent --add-interface={enp4s0,virbr0}
-   sudo firewall-cmd --add-interface=enp4s0 #what about multiple?
+   sudo iptables-save > iptables.copy
 
-Let's add the required services and port/protocols.
+Flush the rules in both the (default) filtering table and the nat (network addresss translation) tables:
 
 .. code-block:: console
 
-   sudo firewall-cmd --add-service={http,https}
-   sudo firewall-cmd --add-port={80/tcp,443/tcp}
+   sudo iptables -F
+   sudo iptables -t nat -F
 
-We will enable masquerading to allow our system to forward packages, then add the specific port-forwarding rules for http/https.
-
-.. code-block:: console
-
-   sudo firewall-cmd --add-masquerade
-   sudo firewall-cmd --add-forward-port=port={80,443}:proto=tcp:toaddr=192.168.122.30
-
-By running ``firewall-cmd --list-all`` you should see something like:
+Now add a pre-routing NAT rule for http & https. Note also that you likely want to replace "192.168.0.10" with your own host IP.
 
 .. code-block:: console
 
-   home (default, active)
-     interfaces: enp4s0 virbr0
-     sources:
-     services: dhcpv6-client http https mdns samba-client ssh
-     ports: 80/tcp 443/tcp
-     protocols:
-     masquerade: yes
-     forward-ports: port=80:proto=tcp:toport=:toaddr=192.168.122.30
-           port=443:proto=tcp:toport=:toaddr=192.168.122.30
-     icmp-blocks:
-     rich rules:
+   sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.122.30:80
+   sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination 192.168.122.30:443
+
+Here's a breakdown of what the command is doing doing:
+
+* **-t nat**: edit the network address translation table
+* **-A PREROUTING**: by appending a rule to the pre-routing chain
+* **-p tcp**: for protocol tcp
+* **--dport 80**: when destination port of incoming packet is 80 (http)
+* **-j DNAT**: jump to a destination-NAT of ....
+* **--to-destination 192.168.122.30:80**: ip 192.168.122.30, port 80
+
+Finally, we need to add masquerading so that the Nextcloud server sends the packets back with a destination of the KVM host.
+
+.. code-block:: console
+
+   sudo iptables -t nat -A POSTROUTING -j MASQUERADE
 
 
 Verify Port-forwarding with Windows
 -----------------------------------
 
-I'm verifying the firewall settings are correct with my Windows laptop on the same home network. This is, of course, possible with Linux or Mac, just substitute the step for updating the static hosts file.
+I'm verifying the firewall settings are correct with my Windows laptop. This is, of course, possible with Linux or Mac, just substitute the step for updating the static hosts file.
 
-First, let's make sure port-forwarding is working.
+First, let's make sure port-forwarding is working. Enter this url in any web browser: http://192.168.122.30
 
-Enter this url in any web browser: http://192.168.122.30
+If haven't yet deleted it, you should see the `Apache2 Ubuntu Default Page <https://www.linux.com/learn/apache-ubuntu-linux-beginners>`_
 
-If nothing has been disabled, you should see the `Apache2 Ubuntu Default Page <https://www.linux.com/learn/apache-ubuntu-linux-beginners>`_
-
-But for Nextcloud to work you need use the hostname because 192.168.0.10 is not one of Nextcloud's trusted domains.
+But for Nextcloud to work we need use the hostname because ``192.168.0.10`` is not one of Nextcloud's trusted domains.
 
 In Windows, we do this by appending the following line to "C:\Windows\System32\drivers\etc\hosts":
 
@@ -96,15 +86,9 @@ In Windows, we do this by appending the following line to "C:\Windows\System32\d
 
 Now, in a browser, enter https://cloud1.example.vm/nextcloud
 
-You will need to add the security certificate exception as we did in the `previous article <{filename}/install-nextcloud-dev-vm.rst>`_
+You will need to add the security certificate exception as in the `previous article <{filename}/install-nextcloud-dev-vm.rst>`_
 
-If successful, you should see a login page. Leave this open as we'll be using it later.
-
-Back on the Ubuntu VM host, if you want, you can make the firewall changes permanent. If not the settings will be be reset at the next system reboot.
-
-.. code-block:: console
-
-   sudo firewall-cmd --runtime-to-permanent
+If successful, you should see a login page. Leave this open as we'll be using this in the next step.
 
 Create a Non-Admin User
 -----------------------
@@ -130,7 +114,7 @@ We already updated the host file, so everything else in Windows will be super st
 
 Go to https://nextcloud.com/install/#install-clients
 
-click "Windows". This will download the executable. When the download is done double-click to begin the install and complete the install with all the default options selected. A succesful install should end with the launch of a "Nextcloud Connection Wizard":
+click "Windows". This will download the executable. When the download is done complete the install with all the default options selected. A successful install should end with the launch of a "Nextcloud Connection Wizard":
 
 .. image:: {filename}/images/nextcloud_wizard_address.png
    :alt: image: Nextcloud connection wizard address
@@ -143,13 +127,12 @@ You will need to accept the untrusted certificate then enter cloudboy's username
 
 The installer will ask you what to sync. You can keep or change the defaults. Once this is done, the files should be downloaded in the local folder.
 
-
 .. image:: {filename}/images/nextcloud_wizard_sync.png
    :alt: image: Nextcloud connection wizard sync options
 
 ----
 
-Try adding files through both the web interface and local filesystem. It should all be very intuitive.
+Try adding files through both the web interface and local filesystem and see the results. It should all be very intuitive!
 
 
 Client Install & Usage -- Ubuntu
@@ -157,9 +140,9 @@ Client Install & Usage -- Ubuntu
 
 At the time of this writing, there is no installable Nextcloud binary for Ubuntu. I was able to install from source after some mucking about with dependencies and other troubleshooting but I wouldn't recommend it.
 
-Let's instead use the ownCloud client available through the Ubuntu package repository which works just fine with the Nextcloud server (for now). As the projects diverge this may change, but hopefully at that point there we can easily install a Nextcloud client on Ubuntu.
+Let's instead use the ownCloud client available through the Ubuntu package repository which works just fine with the Nextcloud server (for now). As the projects diverge this may change, but hopefully at that point we can easily install a Nextcloud client on Ubuntu.
 
-If you want some background on the `ownCloud <https://owncloud.org/>`_ and Nextcloud split check out `this article <https://serenity-networks.com/goodbye-owncloud-hello-nextcloud-the-aftermath-of-disrupting-open-source-cloud-storage/>`_.
+What is ownCloud and how does it differ from Nextcloud? You'll want to read some background on the `ownCloud and Nextcloud split <https://serenity-networks.com/goodbye-owncloud-hello-nextcloud-the-aftermath-of-disrupting-open-source-cloud-storage/>`_.
 
 .. code-block:: console
 
@@ -184,8 +167,29 @@ You will be presented with the "ownCloud Connection Wizard". Not surprisingly, t
 3. Enter cloudboy's username and password
 4. Accept or modify the syncing defaults
 
-Try changing or adding files on one device and you **should** see the file downloaded on the other device very quickly!
+Try changing, adding & deleting files on one device and you **should** see the file updated on the other device very quickly!
 
-Architecture for Production - Docker
-------------------------------------
+If you're done and want to restore your iptables rules:
 
+.. code-block:: console
+
+   sudo iptables-restore < iptables.copy
+
+
+Nextcloud Deployment Choices
+----------------------------
+
+Your choices for deployment are going to depend on a number of factors. Nextcloud has some `deployment recommendations <https://docs.nextcloud.com/server/11/admin_manual/installation/deployment_recommendations.html>`_ but they are less relevant to me as my use will be personal only at this point.
+
+The two high-level deployment options I need to first consider are:
+
+1. Host, along with a VPN (virtual private network), on a home server?
+2. Host in a private cloud (e.g. `Digital Ocean <https://www.digitalocean.com/>`_ or `AWS <https://aws.amazon.com/>`_)?
+
+As I don't have an existing home server infrastructure I'm going to start with option 2. The cheapest Digital Ocean droplet is only $5/mo. Now there's only 512MiB of RAM & 20GB of SSD storage. This seems tiny but these days but it is just me and the volume of files I actually want to sync sits at 4GB.
+
+But what if things change and I need to move the application back home or to some other provider? And also, how am I going to test out application upgrades or add-ons & easily deploy them?
+
+Well that's where `docker <https://en.wikipedia.org/wiki/Docker_(software)>`_ comes in. With docker, all the Nextcloud dependencies will be contained within a docker image which I can move - with or without the data stored in a docker data volume - from my VM to a Digital Ocean droplet to a home server or anything running a Linux distro that supports the docker engine.
+
+This is, of course, a simplification. So in future articles I'll outline how this actually works.

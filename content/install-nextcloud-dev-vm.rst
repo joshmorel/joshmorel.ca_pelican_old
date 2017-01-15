@@ -7,6 +7,7 @@ Install Nextcloud 11 on Ubuntu 16.04 with MariaDB
 :slug: install-nextcloud-dev-vm
 :authors: Josh Morel
 :summary: Step-by-step instructions for installing Nextcloud 11 on an Ubuntu 16.04 VM with Apache, MariaDB & PHP 7.0.
+:series: Nextcloud
 
 Background
 ----------
