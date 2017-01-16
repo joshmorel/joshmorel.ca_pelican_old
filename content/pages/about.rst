@@ -1,7 +1,15 @@
 About
 #####################
 
-I'm Josh - a technology professional and enthusiast working in the healthcare data domain.
+I'm Josh - a technology professional and enthusiast working in the healthcare sector.
 
-I'm using this site to write project walkthroughs as I learn about different topics in technology. My aim is to entrench the learning in myself while perhaps at the same time help someone else along the way.
+My interests and skills are broad and include:
 
+* Open source software & the surrounding community
+* Programming, dev-ops, system administration
+* Python, Git, Linux, GNU, Postgres, MariaDB, R, & more
+* Health informatics, quality improvement, business analysis
+* Big data and artificial intelligence
+* Blockchain technologies
+
+The purpose of this site is to provide tutorials on the exploration, development and implementation of different technologies. The main objective is to entrench what I learn while providing a useful reference for my future self and perhaps hopefully others.
