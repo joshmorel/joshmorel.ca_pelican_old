@@ -1,7 +1,7 @@
 Install Nextcloud 11 on Ubuntu 16.04 with MariaDB
 #################################################
 :date: 2017-01-07 10:45
-:modified: 2017-01-13 17:24
+:modified: 2017-01-19 18:38
 :tags: nextcloud, linux, ubuntu, mariadb, apache, php
 :category: Private cloud 
 :slug: install-nextcloud-dev-vm
@@ -390,7 +390,21 @@ If you see this, the install is successful!
 Final Server Configuration Pieces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Harden the security of the server as recommended in the `Nextcloud manual <https://docs.nextcloud.com/server/11/admin_manual/installation/installation_wizard.html#strong-perms-label>`_.
+Harden the security of the server by running the script that is recommended in the `Nextcloud manual <https://docs.nextcloud.com/server/11/admin_manual/installation/installation_wizard.html#strong-perms-label>`_.
+
+Copy the entire script text (which starts ``#!/bin/bash``) to a file say ``nextcloud_harden.sh``.
+
+Make it executable:
+
+.. code-block:: console
+
+   chmod +x nextcloud_harden.sh
+
+Execute it:
+
+.. code-block:: console
+
+   sudo ./nextcloud_harden.sh
 
 The last installation step is to add the host name and static IP by editing the php config file:
 
