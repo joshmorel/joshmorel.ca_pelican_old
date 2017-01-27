@@ -1,68 +1,71 @@
-Deploy Nextcloud 11 to Private Cloud Provider
-#############################################
-:date: 2017-01-23 11:40
-:modified: 2017-01-23 11:40
-:tags: nextcloud
+Deploy Nextcloud 11 on Ubuntu 16.04 to a Private Cloud
+######################################################
+:date: 2017-01-27 11:40
+:modified: 2017-01-27 11:40
+:tags: nextcloud, apache, ubuntu
 :category: Private cloud
 :slug: deploy-nextcloud
 :authors: Josh Morel
-:summary: Step-by-step instructions for deploying Nextcloud 11 on an Ubuntu 16.04 to a private cloud provider.
+:summary: Step-by-step instructions for deploying Nextcloud 11 on Ubuntu 16.04 to a private cloud.
 :series: Nextcloud
+
+.. role:: console(code)
+   :language: console
 
 Background
 ----------
 
-So far in this series, we have covered how to `install a Nextcloud server <{filename}/install-nextcloud-dev-vm.rst>`_ and `sync files across clients on multiple devices <{filename}/nextcloud-clients.rst>`_. This was all very good for becoming comfortable in administering Nextcloud but we still don't have anything useful.
+So far in this series, we have covered how to `install a Nextcloud server on a VM <{filename}/install-nextcloud-dev-vm.rst>`_ and how to `sync files across clients on multiple devices <{filename}/nextcloud-clients.rst>`_. This was all very good for becoming comfortable in the installation & basic usage of Nextcloud but we still don't have anything providing value.
 
-In this article we'll deploy to production. In the end we'll have a great sync-n-share application over which we have control.
+In this article we'll deploy to production so that by the end we'll have a secure, private sync-n-share application over which we have a high degree of control.
 
-Note that I did mentioned that for production usage I would be using docker as a means to containerize my application for ease of update & potential future migration to a homer server. I decided to delay that option because I was eager to get my Nextcloud instance up and running. I do certainly intend to revisit this at a later date.
+I've deployed my Nextcloud an a Digital Ocean droplet. If you are hosting yours in a home network you will have different steps but many of the considerations will apply.
 
-I've deployed my Nextcloud an a Digital Ocean droplet. If you are hosting yours in a home network you will have different considerations but many of these steps will still apply.
+I will cover in this article:
 
-Before I continue I must recognize that Digital Ocean does have a one-click deploy for `ownCloud <https://www.digitalocean.com/products/one-click-apps/owncloud/>`_. My guess is at some point they will have one for Nextcloud as well. While this option would be simpler, as mentioned in a previous article I want control & and I want understanding.
+1) Preparing your private cloud instance for secure hosting
+2) Installation of Nextcloud include advanced security configuration
+3) SSL certificate verification with Let's Encrypt
+4) Usage & additional considerations
 
-So what will I cover in this article:
+I must recognize that I did mention in the last article I'd be using Docker for production. I decided to delay that option because I was eager to get my Nextcloud instance up and running and had everything in place to make it work. I do certainly intend to revisit this at a later date.
 
-1) Deploying to a private cloud
-2) Getting an SSL certificate from Let's Encrypt
-3) Additional considerations for security
-4) Installing & using non-default modules
 
-Prerequisites
--------------
+Server Preparation
+------------------
 
-Spin up an instance of Ubuntu 16.04 (or greater) with a private cloud provider (Digital Ocean, VPSie, vultr, etc). Results may vary with versions of Ubuntu later than 16.04. Please review the `Nextcloud document <https://docs.nextcloud.com/server/11/admin_manual/installation/php_55_installation.html>`_ for CentOS-specific requirements if that is your preference.
+Spin up an instance of Ubuntu 16.04 (or greater) with a private cloud provider (Digital Ocean, VPSie, vultr, etc). Results may vary with versions of Ubuntu later than 16.04. Please review the Nextcloud document for `CentOS-specific <https://docs.nextcloud.com/server/11/admin_manual/installation/php_55_installation.html>`_ requirements.
 
-Login to your instance and create a non-root user with sudo privileges. For the purposes of this tutorial we'll pretend this user is called "mrcloud" and your public IP is "111.222.111.222".
 
-Obtain or use your own domain name, adding a CNAME record entry for "cloud.yourdomain.tld".
+Login to your instance and create a non-root user with sudo privileges. For the purposes of this tutorial we'll pretend this user is called "mrcloud" and your public IP is "222.222.222.222".
+
+`Register a domain name <https://www.icann.org/en/system/files/files/participating-08nov13-en.pdf>`_, if you do not have one and add a `CNAME record <https://en.wikipedia.org/wiki/CNAME_record>`_ for "cloud.yourdomain.tld" Note you can do this with just an IP address, however, the remaining instructions assume you are using a domain.
 
 Because you'll be using a public IP I would also:
 
-* disable remote root login & password-based authentication with ssh
-* set-up iptable rules to filter unexpected traffic
+* disable ssh remote root login & password-based authentication
+* set-up firewall rules to filter incoming traffic
 
-After logging in as root & changing the root password:
+Log in as root to the server as per your provider instructions then add the non-admin user.
 
 .. code-block:: console
 
     adduser mrcloud
     usermod -aG sudo mrcloud
 
-Let's copy our ssh public key from our desktop:
+Back **on your desktop** copy the ssh public key to the server:
 
 .. code-block:: console
 
-    ssh-copy-id mrcloud@111.222.111.222
+    ssh-copy-id mrcloud@222.222.222.222
 
 Enter the password created earlier when prompted & login.
 
 .. code-block:: console
 
-    ssh mrcloud@111.222.111.222
+    ssh mrcloud@222.222.222.222
 
-``sudoedit /etc/ssh/sshd_config`` to include the following lines :
+:console:`sudoedit /etc/ssh/sshd_config` to include the following lines :
 
 .. code-block:: console
 
@@ -76,12 +79,12 @@ Reload ssh and exit:
     sudo systemctl reload ssh
     exit
 
-Back on your desktop, add to the ``~/.ssh/config`` file:
+Back **on your desktop**, add to the ``~/.ssh/config`` file:
 
 .. code-block:: console
 
     Host nextcloud
-        HostName 111.222.111.222
+        HostName 222.222.222.222
         User mrcloud
         Port 22
 
@@ -91,9 +94,7 @@ Now you can log-in with:
 
     ssh nextcloud
 
-For more ssh usage options check out `article from Digital Ocean <https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys>`_.
-
-We also want to implement a basic firewall to allow only incoming http, https & ssh. We'll use the aptly-named uncomplicated firewall - `ufw <https://help.ubuntu.com/community/UFW>`_ - on Ubuntu. On CentOS you'll want to look into `firewalld <http://www.firewalld.org/>`_.
+We also want to implement a basic firewall to allow only incoming http, https & ssh. We'll use *uncomplicated firewall* - `ufw <https://help.ubuntu.com/community/UFW>`_ - on Ubuntu. On CentOS you'll want to look into `firewalld <http://www.firewalld.org/>`_.
 
 ufw should be installed with Ubuntu 16.04 but disabled by default. Let's enable & set some rules to allow only the incoming traffic we expect:
 
@@ -114,25 +115,28 @@ If you want to be even more secure you can restrict based on incoming IP. For ex
     sudo ufw allow from 99.88.77.66 to any port 22 proto tcp
 
 
-
-Complete Nextcloud Installation
--------------------------------
+Nextcloud Installation
+----------------------
 
 Installing the Nextcloud server was covered in-depth in my `first article in the series <{filename}/install-nextcloud-dev-vm.rst>`_.
 
-For completeness I'll repeat all necessary steps which I outlined in detail in a super compact form (including use of here documents & sed for editing config files).  I will only provide explanations where my steps from the first article.
+For completeness I'll repeat all necessary steps but in a more compact form. I will leave the creation of the `virtual host file <https://httpd.apache.org/docs/2.4/vhosts/examples.html>`_ until a sub-section at the end as I will deviate from the previous instructions. We will be adding some additional security options.
 
-Install **MariaDB**:
+Install Prerequisites
+~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: console
-
-    sudo apt install -y mariadb-server mariadb-client
-
-Store the necessary config options for Nextcloud operation:
+Install MariaDB, Apache & PHP modules:
 
 .. code-block:: console
 
-    cat << EOF | sudo tee /etc/mysql/conf.d/nextcloud.cnf
+    sudo apt install -y mariadb-server mariadb-client apache2 \
+    php7.0-common php7.0-cli php7.0-bz2 php7.0-curl php7.0-gd php7.0-intl php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-mysql php7.0-xml php7.0-zip libapache2-mod-php7.0
+
+
+:console:`sudoedit /etc/mysql/conf.d/nextcloud.cnf` to create the necessary MariaDB configurations:
+
+.. code-block:: console
+
     # Nextcloud database configuration file
     [mysqld]
 
@@ -146,9 +150,8 @@ Store the necessary config options for Nextcloud operation:
     innodb_large_prefix=true
     innodb_file_format=barracuda
     innodb_file_per_table=true
-    EOF
 
-Restart the login as root:
+Restart & login as root:
 
 .. code-block:: console
 
@@ -158,11 +161,9 @@ Restart the login as root:
 
     sudo mysql -uroot
 
-Create the database and user, replacing the username (optional) and password (highly recommended) with your own then exit.
+Create the database and user, replacing ``DBPASS`` with your own password.
 
 .. code-block:: mysql
-
-    sudo mysql -uroot
 
     CREATE DATABASE nextcloud CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
     CREATE USER oc_nextadmin@localhost IDENTIFIED BY 'DBPASS';
@@ -170,70 +171,15 @@ Create the database and user, replacing the username (optional) and password (hi
     FLUSH PRIVILEGES;
     exit
 
-Install **Apache**:
+Enable the required Apache modules:
 
 .. code-block:: console
 
-    sudo apt -y install apache2
-
-
-Create the Nextcloud virtual host configuration file. Note that I've upgraded this from the previous article as per the `SSL-specific recommendations from Nextcloud <https://docs.nextcloud.com/server/11/admin_manual/configuration_server/harden_server.html#use-https>`_. As we're public, we now definitely want our communication to be transmitted via SSL by redirecting HTTP traffic. We also will add the `HTTP Strict Transport Security header <https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security>`_.
-
-.. code-block:: console
-
-    sudoedit /etc/apache2/sites-available/nextcloud.conf
-
-Add the following, replacing "yourdomain.tld" with your actual domain.
-
-.. code-block:: aconf
-
-    Alias /nextcloud "/var/www/nextcloud/"
-
-    # Redirecting all HTTP traffic to HTTPS
-    <VirtualHost *:80>
-            ServerName "cloud.yourdomain.tld"
-            Redirect permanent "/" "https://cloud.yourdomain.tld/"
-    </VirtualHost>
-
-    <VirtualHost *:443>
-            ServerName "cloud.yourdomain.tld"
-
-            SSLEngine on
-
-            # HSTS (mod_headers is required) (15768000 seconds = 6 months)
-            Header always set Strict-Transport-Security "max-age=15768000"
-
-            ErrorLog ${APACHE_LOG_DIR}/error.log
-            CustomLog ${APACHE_LOG_DIR}/access.log combined
-
-            <Directory /var/www/nextcloud/>
-              Options +FollowSymlinks
-              AllowOverride All
-              <IfModule mod_dav.c>
-                Dav off
-              </IfModule>
-
-            SetEnv HOME /var/www/nextcloud
-            SetEnv HTTP_HOME /var/www/nextcloud
-            </Directory>
-    </VirtualHost>
-
-
-Enable the site, required modules & restart apache. Note that last time we also denabled the default-ssl site. But because we have defined ssl usage in the ``.conf`` file this is no longer necessary. There are some optional steps we can take towards further improving apache security which I will detail at the end.
-
-.. code-block:: console
-
-    sudo a2ensite nextcloud.conf
     sudo a2enmod rewrite headers env dir mime ssl
-    sudo service apache2 restart
 
 
-Install all required **PHP 7.0** modules:
-
-.. code-block:: console
-
-    sudo apt -y install php7.0-common php7.0-cli php7.0-bz2 php7.0-curl php7.0-gd php7.0-intl php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-mysql php7.0-xml php7.0-zip libapache2-mod-php7.0
-
+Install Nextcloud
+~~~~~~~~~~~~~~~~~
 
 Download & verify the bz2 archive for the latest stable version of Nextcloud server from: https://nextcloud.com/install/#instructions-server
 
@@ -243,14 +189,14 @@ Once you have downloaded and verified the integrity of the archive, untar it to 
 
     sudo tar -xvjf nextcloud-11.X.Y.tar.bz2 -C /var/www/
 
-Change the ownership to the apache user then move to that directory to complete the final install.
+Change the ownership to the HTTP user then move to that directory to complete the final install.
 
 .. code-block:: console
 
     sudo chown -R www-data:www-data /var/www/nextcloud
     cd /var/www/nextcloud
 
-Complete the install with ``occ``, replacing the capitalized password with your own.
+Complete the install with ``occ``, replacing the capitalized passwords with your own.
 
 .. code-block:: console
 
@@ -258,7 +204,6 @@ Complete the install with ``occ``, replacing the capitalized password with your 
     --database "mysql" --database-name "nextcloud" \
     --database-user "oc_nextadmin" --database-pass "DBPASS" \
     --admin-user "nextadmin" --admin-pass "ADMINPASS"
-
 
 Harden the security of the server by running the script that is recommended in the `Nextcloud manual <https://docs.nextcloud.com/server/11/admin_manual/installation/installation_wizard.html#strong-perms-label>`_.
 
@@ -269,30 +214,103 @@ Copy the entire script text (which starts ``#!/bin/bash``) to a file say ``nextc
    chmod +x nextcloud_harden.sh
    sudo ./nextcloud_harden.sh
 
-``sudoedit /var/www/nextcloud/config/config.php`` to add the public IP and name to the ``trusted_domains`` variable, making sure to use your proper IP & domain name.
+:console:`sudoedit /var/www/nextcloud/config/config.php` to add the public IP and name to the ``trusted_domains`` variable, making sure to use your proper IP & domain name.
 
 .. code-block:: console
 
    'trusted_domains' =>
    array (
      0 => 'localhost',
-     1 => '111.222.111.222',
+     1 => '222.222.222.222',
      2 => 'cloud.yourdomain.tld',
    ),
 
-Finally, tell Apache to reload configurations:
+
+
+Create Secure Apache Virtual Host File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As mentioned earlier, I've updated this part from the previous article as we're now public. We want a bit more security so let's:
+
+* Redirect all HTTP traffic to HTTPS
+* Add the `HTTP Strict Transport Security header <https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security>`_
+* Hide Apache Version & OS Identity
+* Close down all other directories
+
+:console:`sudoedit /etc/apache2/apache2.conf` first addding two options **to the end of the file** to hide information on OS & Apache version in 403 (forbidden) & 404 (not found) responses:
+
+.. code-block:: aconf
+
+    # Hide OS/Apache version information in both HTML & response header
+    ServerSignature Off
+    ServerTokens Prod
+
+:console:`sudoedit /etc/apache2/sites-available/nextcloud.conf` to create the Nextcloud virtual hosts configurations with explanatory comments:
+
+.. code-block:: aconf
+
+    # Ensure nextcloud listens on ports 80 & 443
+    Listen 80
+    Listen 443
+
+    # Alias for explicit HTML to file directory mapping
+    Alias /nextcloud "/var/www/nextcloud/"
+
+    # Redirect all HTTP traffic to HTTPS
+    <VirtualHost *:80>
+            # Only take traffic for "cloud.*" CNAME
+            ServerName cloud.yourdomain.tld
+            Redirect permanent / "https://cloud.yourdomain.tld/"
+    </VirtualHost>
+
+    <VirtualHost *:443>
+            ServerName cloud.yourdomain.tld
+
+            # Use SSL
+            SSLEngine on
+            SSLCertificateFile      /etc/ssl/certs/ssl-cert-snakeoil.pem
+            SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+
+            # HTTP Strict Transport Security (15768000 seconds = 6 months)
+            Header always set Strict-Transport-Security "max-age=15768000"
+
+            ErrorLog ${APACHE_LOG_DIR}/error.log
+            CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+            # Directory specific options as per Nextcloud template
+            <Directory /var/www/nextcloud/>
+              Options +FollowSymlinks
+
+              # Override all settings .htaccess files auto-installed with Nextcloud
+              AllowOverride All
+
+              <IfModule mod_dav.c>
+                Dav off
+              </IfModule>
+
+            SetEnv HOME /var/www/nextcloud
+            SetEnv HTTP_HOME /var/www/nextcloud
+            </Directory>
+    </VirtualHost>
+
+Back in the console, we'll enable the Nextcloud site, remove the default Apache index.html file & restart the server.
 
 .. code-block:: console
 
-    sudo service apache2 reload
+    sudo a2ensite nextcloud
+    sudo rm /var/www/html/index.html
+    sudo service apache2 restart
 
+Confirm the installation by visiting "cloud.yourdomain.tld/nextcloud". As in our previous articles you'll still need to add the security exception for the self-signed SSL certificate.
 
-Confirm the installation by visiting https://cloud.yourdomain.tld/nextcloud. As in our previous articles you'll need to add the security exception for the self-signed SSL certificate. But now that you know the install actually worked, let's get certified!
+You can set up a different virtual host file to serve different content from this Apache server or redirect traffic another server based on host name, but that is beyond the scope of this article.
+
+But now that you've verified the secure installation is working, let's get certified!
 
 Getting Certified with Let's Encrypt
 ------------------------------------
 
-`Let's Encrypt is a free, automated and open Certificate Authority <https://letsencrypt.org/>`_. Pretty awesome. We can follow the `certbot <https://certbot.eff.org/#ubuntuxenial-apache>`_ instructions to install
+`Let's Encrypt is a free, automated and open Certificate Authority <https://letsencrypt.org/>`_. Pretty awesome. We can follow the `certbot <https://certbot.eff.org/#ubuntuxenial-apache>`_ instructions to fetch & deploy the verified SSL certificate.
 
 
 .. code-block:: console
@@ -305,27 +323,45 @@ Then run the program:
 
     sudo letsencrypt --apache
 
-You should only have the one domain to select. Continue, and provide your email. Then try accessing the site again. It should be obvious that the certificate has been verified by an CA due to the green lock icon in the top-left corner.
+.. image:: {filename}/images/letsencrypt_domain.png
+   :alt: image: Let's Encrypt Domain Selection
+
+
+1. You should only have the one domain - "cloud.yourdomain.tld" - to select, ensure it is selected & continue.
+2. Provide your email.
+3. Select "Easy - Allow both HTTP and HTTPS access to these sites" since we've already created a secure configuration.
+4. Click OK - that's it!
+
+Once all steps are complete you can try accessing the site again. You should no longer receive a security error when accessing the site plus you'll see a green lcok icon in the top-left corner indicating the verification.
 
 This will expire after 90 days so you will need to renew. I will leave that piece up to you. You can find some useful documentation here: https://certbot.eff.org/docs/using.html#renewal
 
 
-**So you are good to go!** You can start using your production instance right away with a few `desktop <{filename}/nextcloud-clients.rst>`_ or `mobile <https://nextcloud.com/install/#install-clients>`_ clients.
+Usage & Additional Considerations
+---------------------------------
 
-I have experienced excellent usability & performance so far with only 512MiB of RAM and 1 CPU on a 20GiB SSD Digital Ocean droplet. Of course it's just me and I only have about 2GiB of files in play so results will certainly vary.
+**You are good to go!** You can start using your production instance right away with a few `desktop <{filename}/nextcloud-clients.rst>`_ or `mobile <https://nextcloud.com/install/#install-clients>`_ clients.
 
-Additional Security Considerations
-----------------------------------
+I must report excellent usability & performance so far with only 512MiB of RAM and 1 CPU on a 20GiB SSD Digital Ocean droplet. Of course it's just me and I only have about 2GiB of files in play. Results may vary.
 
-I would recommend reviewing Nextcloud's `Hardening and Security Guidance <https://docs.nextcloud.com/server/11/admin_manual/configuration_server/harden_server.html>`_ and decide what else you may want to apply.
-
-Some additional steps not explicitly covered that apply to Apache more generally include:
-
+As you explore and expand your usage, you'll need to install apps and make additional configurations but there are a few things to consider right-away:
 
 Disaster Recovery
------------------
+~~~~~~~~~~~~~~~~~
 
-You'll definitely want to consider disaster recovery. I have yet to put that in place but certainly plan to. Recommendations are provided in the Nextcloud administration manual: https://docs.nextcloud.com/server/11/admin_manual/maintenance/index.html
+You'll definitely want to consider disaster recovery. I have yet to put that in place but certainly plan to soon. Recommendations are provided in the Nextcloud administration manual: https://docs.nextcloud.com/server/11/admin_manual/maintenance/index.html
+
+My plan is to create a cronjob to back-up once a day to local storage.
+
+Email
+~~~~~
+
+For sending email notifications and enabling password reset through email you'll need an email server. I wouldn't bother as it's just me but I may yet to learn how it works.
+
+Nextcloud has some comprehensive documentation on different options here: https://docs.nextcloud.com/server/11/admin_manual/configuration_server/email_configuration.html
 
 
+Next Article Series
+-------------------
 
+I think I'm done writing on Nextcloud for a bit. I next plan to take on `this challenge by Dan Langille <https://dan.langille.org/2017/01/21/where-is-your-tech-passion/>`_. The purpose is to find your tech passion by completing a truly full stack personal tech project while blogging about it to find out - what is that tech discipline that creates the most enjoyment for you - is it the hardware, system administration, networking, development or even the writing? Let's do it!
