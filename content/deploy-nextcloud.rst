@@ -28,7 +28,10 @@ I will cover in this article:
 3) SSL certificate verification with Let's Encrypt
 4) Usage & additional considerations
 
-I must recognize that I did mention in the last article I'd be using Docker for production. I decided to delay that option because I was eager to get my Nextcloud instance up and running and had everything in place to make it work. I do certainly intend to revisit this at a later date.
+I must recognize two things before continuing:
+
+* Digital Ocean has a "one-click" `install for ownCloud <https://www.digitalocean.com/products/one-click-apps/owncloud/>`_. I haven't tried it but it's likely much easier than what I'm demonstrating here, however, as mentioned in an earlier article I'd prefer understanding & control. Other private cloud vendors may have similar offerings.
+* I did mention in the last article I'd be using Docker for production. I decided to delay that option because I was eager to get my Nextcloud instance up and running and had everything in place to make it work. I do certainly intend to revisit this at a later date.
 
 
 Server Preparation
