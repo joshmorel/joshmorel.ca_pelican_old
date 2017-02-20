@@ -42,4 +42,5 @@ CC_LICENSE = 'CC-BY-SA'
 
 PLUGIN_PATHS = ['pelican-plugins']
 PLUGINS = ['tag_cloud', 'series']
+TAG_CLOUD_SORTING = 'alphabetically'
 
