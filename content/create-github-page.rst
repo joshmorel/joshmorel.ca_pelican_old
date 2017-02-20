@@ -2,7 +2,7 @@ Create a GitHub Personal Page with Python
 #########################################
 
 :date: 2016-11-25 07:41
-:modified: 2016-11-27 16:59
+:modified: 2017-02-20 15:35
 :tags: python, pelican, github
 :category: Web publishing 
 :slug: create-a-github-personal-page-with-python
@@ -80,12 +80,12 @@ You can easily get started with the pelican quickstart utility:
    cd /path/to/ghpages
    pelican-quickstart
 
-There will be several prompts, use similar answers to the following:
+There will be several prompts, use similar answers to the following. Note I am not using either Fabfile or Makefile for automation. These are more useful if publishing to a personally managed server (i.e. not GitHub).
 
 * Where do you want to create your new web site? **[.]**
 * Do you want to specify a URL prefix? e.g., http:example.com **Y**
 * What is your URL prefix? (see above example; no trailing slash) **http://you.github.io**
-* Do you want to generate a Fabfile/Makefile to automate generation and publishing? **Y**
+* Do you want to generate a Fabfile/Makefile to automate generation and publishing? **N**
 * Do you want to auto-relate & simpleHTTP script to assist with theme and site development? **Y**
 * Do you want to upload your website using ...? **Y for only GitHub Pages**
 * Is this your personal page (username.github.io)? **Y**
