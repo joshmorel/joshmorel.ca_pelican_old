@@ -2,7 +2,7 @@ Create a GitHub Personal Page with Python
 #########################################
 
 :date: 2016-11-25 07:41
-:modified: 2017-02-20 15:35
+:modified: 2017-02-26 09:44
 :tags: python, pelican, github
 :category: Web publishing 
 :slug: create-a-github-personal-page-with-python
@@ -86,7 +86,7 @@ There will be several prompts, use similar answers to the following. Note I am n
 * Do you want to specify a URL prefix? e.g., http:example.com **Y**
 * What is your URL prefix? (see above example; no trailing slash) **http://you.github.io**
 * Do you want to generate a Fabfile/Makefile to automate generation and publishing? **N**
-* Do you want to auto-relate & simpleHTTP script to assist with theme and site development? **Y**
+* Do you want an auto-reload & simpleHTTP script to assist with theme and site development? **N**
 * Do you want to upload your website using ...? **Y for only GitHub Pages**
 * Is this your personal page (username.github.io)? **Y**
 
@@ -108,6 +108,7 @@ I decided to use *rst*. You can use your favourite text editor or an IDE but I w
 
 Make sure to add metadata aligning with `these requirements <http://docs.getpelican.com/en/stable/content.html#file-metadata>`_.
 
+**Update:** After about three months of work with Pelican using reStructured Text I've settled to using `PyCharm <https://www.jetbrains.com/help/pycharm>`_ for editing & the options outlined below for previewing in a web browser. The option I recommended earlier is okay for quickly previewing how rst syntax works but is not practical for continuous editing, saving & HTML generation. To be honest, however, I'm considering switching to markdown due to the broader built-in support for editing & preview (Atom etc).
 
 Building & Serving with HTTP
 ----------------------------
