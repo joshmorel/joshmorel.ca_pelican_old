@@ -1,0 +1,150 @@
+Adding Pelican Plugins
+######################
+:date: 2017-03-04 18:38
+:modified: 2017-03-04 18:38
+:tags: nodejs, n
+:category: JavaScript Ecosystem
+:slug: node-version-management-with-n
+:authors: Josh Morel
+:summary: Using nodenv for Node.js virtual environments in Ubuntu
+
+Background
+----------
+
+I'm becoming a huge fan of Node.js but deciding on the best option for working with versions and virtual environments can be a bit confusing. Much like everything else in the Node.js ecosystem, there are more than enough options to choose from. To cement my own understanding and perhaps provide some help to others I'll outline how to use `nodenv <https://github.com/nodenv/nodenv>`_ for managing virtual environments for Ubuntu. This should work equally for most Linux distros and Mac should be similar. Windows would require an alternate approach.
+
+I'll cover deployment considerations in another article.
+
+Alternates
+~~~~~~~~~~
+
+I found nodenv to be fast, usable and very well documented. Additionally, it is forked from rbenv so provides a familiar interface for those also working in Ruby.
+
+But before continuing, I'll recognize three alternates which I considered and also tried.
+
+* `nvm <https://github.com/creationix/nvm>`_: This is the one you will see the most articles about. I did work for me in the short time I used it but I do see many open issues and generally I liked nodenv better.
+* `nave <https://github.com/isaacs/nave>`_: Very similar to nvm and it also seems good. However it wasn't as user-friendly as either nvm or nodenv.
+* `n <https://github.com/tj/nv>`_: This is the only one I would explicitly not recommend at my time of writing this. It doesn't have the functionality to easily manage virtual environments for a variety of projects (e.g. it only keeps one set of node_modules). It could be an option for managing node versions at the system-level only but I'd rather use an apt repository for that (see later).
+
+I'll also note that none of these options work on Windows - only OS X & Linux - so if you're working on Windows you may consider `nvm-windows <https://github.com/coreybutler/nvm-windows>`_ or `nodist <https://github.com/marcelklehr/nodist>`_. nodenv *might* work with MinGW/Cygwin.
+
+Ubuntu 16.04 - Default apt install
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To install Node.js from the main Xenial repository at the system level you can either run `apt install nodejs` or `apt install npm`.
+
+npm is the package manager for node and is required to work in the Node.js ecosystem more generally. However, we'll get the later version of `npm` with `nodenv` later so let's just install Node.js to keep things tidy.
+
+.. code-block:: console
+
+   sudo apt install nodejs
+
+You can confirm that Node.js was installed:
+
+.. code-block:: console
+
+   $ nodejs -v
+   v4.2.6
+
+So is v4.2.6 a recent version? Not really. You can visit the `https://github.com/nodejs/LTS/ <Node.js Long-term Support Working Group>`_ to confirm.
+
+It is active LTS but ending in 2017-03-31 so maybe we want something a touch more current? As of this writing v6.10.0 is the latest LTS version.
+
+Installing nodenv & node-build plugin
+-------------------------------------
+
+There are a few steps to the `nodenv` install. However, it's well worth it given the end result. I actually like how `nodenv` carries on the Unix & Node.js philosophies of program doing one thing well. For this reason, there are a few plugins required to get the functionality I desire.
+
+First install & activate `nodenv` by cloning the git repo, appending the required lines to your bashrc, and then sourcing the bashrc so we can use it right away.
+
+.. code-block:: console
+
+   git clone https://github.com/nodenv/nodenv.git ~/.nodenv
+   echo 'export PATH="$HOME/.nodenv/bin:$PATH"' >> ~/.bashrc
+   echo 'eval "$(nodenv init -)"' >> ~/.bashrc
+   source ~/.bashrc
+
+We can confirm install:
+
+.. code-block:: console
+
+   $ type nodenv
+
+As mentioned `nodenv` is very modular so a plugin is required to build node versions. We can install `node-build <https://github.com/nodenv/node-build#readme>`_ and then list available versions.
+
+.. code-block:: console
+
+   git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-build
+   nodenv install -l
+
+Installing Node Versions & Packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Now that we have `nodenv` and the `node-build` plugin, we can install multiple Node.js versions. Let's install the latest LTS version (at time of this running) and then activate it globally for your user.
+
+.. code-block:: console
+
+   $ nodenv install 6.8.10
+   $ nodenv global 6.8.10
+
+You can confirm `node` & `npm` are installed:
+
+.. code-block:: console
+
+   $ npm version
+   { npm: '3.10.10',
+     ares: '1.10.1-DEV',
+     http_parser: '2.7.0',
+     icu: '58.2',
+     modules: '48',
+     node: '6.10.0',
+     openssl: '1.0.2k',
+     uv: '1.9.1',
+     v8: '5.1.281.93',
+     zlib: '1.2.8' }
+
+To install a global node module we do so as per usual, but we need to `rehash` to make it available from the command-line.
+
+.. code-block:: console
+
+   $ npm install -g mocha
+   $ nodenv rehash
+   $ mocha version
+   3.2.0
+
+We can install the nodenv-package-rehash plugin to enable auotmatic rehashing.
+
+.. code-block:: console
+
+   $ git clone https://github.com/nodenv/nodenv-package-rehash "$(nodenv root)"/plugins/nodenv-package-rehash.git
+   $ nodenv package-hooks install --all
+   $ npm install -g nodemon
+   $ nodemon -v
+   1.11.0
+
+Installing Local Node Versions per Project
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To start to see the power in nodenv let's install a project locally for a specific project.
+
+.. code-block:: console
+
+   $ nodenv install 4.8.0
+   $ cd path/to/projects/dir
+   $ mkdir path/to/projects/hello-nodenv
+   $ cd path/to/projects/hello-nodenv
+   $ nodenv local 4.8.0
+   $ node -v
+   v4.8.0
+
+
+This will write "4.8.0" to a .node-version file. When you cd into this directory nodenv will adjust the version shim (for details on how this works see the README).
+
+Now all our `npm` scripts will work with the local version instead of the global version.
+
+
+Full-stack Project Progress
+---------------------------
+
+I'm working a personal end-to-end full-stack project to Node.js is a big part of it.
+
