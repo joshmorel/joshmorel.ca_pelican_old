@@ -1,5 +1,5 @@
-Adding Pelican Plugins
-######################
+Node Virtual Environments with nodenv
+#####################################
 :date: 2017-03-04 18:38
 :modified: 2017-03-04 18:38
 :tags: nodejs, n
@@ -55,13 +55,16 @@ Installing nodenv & node-build plugin
 
 There are a few steps to the `nodenv` install. However, it's well worth it given the end result. I actually like how `nodenv` carries on the Unix & Node.js philosophies of program doing one thing well. For this reason, there are a few plugins required to get the functionality I desire.
 
-First install & activate `nodenv` by cloning the git repo, appending the required lines to your bashrc, and then sourcing the bashrc so we can use it right away.
+First install & activate `nodenv` by cloning the git repo, appending the required lines to your .profile.
+
+If you are using CentOS/REHL or Mac then you'll need to edit your .bash_profile instead.
 
 .. code-block:: console
 
    git clone https://github.com/nodenv/nodenv.git ~/.nodenv
-   echo 'export PATH="$HOME/.nodenv/bin:$PATH"' >> ~/.bashrc
-   echo 'eval "$(nodenv init -)"' >> ~/.bashrc
+   echo 'export PATH="$HOME/.nodenv/bin:$PATH"' >> ~/.profile
+
+   echo 'eval "$(nodenv init -)"' >> ~/.profile
    source ~/.bashrc
 
 We can confirm install:
