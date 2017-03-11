@@ -28,8 +28,8 @@ But before continuing, I'll recognize three alternates which I considered and al
 
 I'll also note that none of these options work on Windows - only OS X & Linux - so if you're working on Windows you may consider `nvm-windows <https://github.com/coreybutler/nvm-windows>`_ or `nodist <https://github.com/marcelklehr/nodist>`_. nodenv *might* work with MinGW/Cygwin.
 
-Ubuntu 16.04 - Default apt install
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Ubuntu 16.04 - Default apt-based install
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To install Node.js from the main Xenial repository at the system level you can either run `apt install nodejs` or `apt install npm`.
 
@@ -37,7 +37,7 @@ npm is the package manager for node and is required to work in the Node.js ecosy
 
 .. code-block:: console
 
-   sudo apt install nodejs
+   $ sudo apt install nodejs
 
 You can confirm that Node.js was installed:
 
@@ -61,34 +61,38 @@ If you are using CentOS/REHL or Mac then you'll need to edit your .bash_profile 
 
 .. code-block:: console
 
-   git clone https://github.com/nodenv/nodenv.git ~/.nodenv
-   echo 'export PATH="$HOME/.nodenv/bin:$PATH"' >> ~/.profile
+   $ git clone https://github.com/nodenv/nodenv.git ~/.nodenv
+   $ echo 'export PATH="$HOME/.nodenv/bin:$PATH"' >> ~/.profile
+   $ echo 'eval "$(nodenv init -)"' >> ~/.profile
 
-   echo 'eval "$(nodenv init -)"' >> ~/.profile
-   source ~/.bashrc
-
-We can confirm install:
+Log out then log back in to confirm the install:
 
 .. code-block:: console
 
    $ type nodenv
+   nodenv is a function
+   nodenv ()
+   ...
 
-As mentioned `nodenv` is very modular so a plugin is required to build node versions. We can install `node-build <https://github.com/nodenv/node-build#readme>`_ and then list available versions.
+As mentioned earlier `nodenv` is modular so a plugin is required to build node versions. We can install `node-build <https://github.com/nodenv/node-build#readme>`_ and then list available versions.
 
 .. code-block:: console
 
-   git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-build
-   nodenv install -l
+   $ git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-build
+   $ nodenv install -l
+   0.1.14
+   0.1.15
+   ...
 
 Installing Node Versions & Packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that we have `nodenv` and the `node-build` plugin, we can install multiple Node.js versions. Let's install the latest LTS version (at time of this running) and then activate it globally for your user.
+Now that we have `nodenv` and the `node-build` plugin, we can install multiple Node.js versions. Let's install the latest LTS version (at time of this writing) and then activate it globally (for the logged in user).
 
 .. code-block:: console
 
-   $ nodenv install 6.8.10
-   $ nodenv global 6.8.10
+   $ nodenv install 6.8.0
+   $ nodenv global 6.8.0
 
 You can confirm `node` & `npm` are installed:
 
@@ -128,26 +132,39 @@ We can install the nodenv-package-rehash plugin to enable auotmatic rehashing.
 Installing Local Node Versions per Project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To start to see the power in nodenv let's install a project locally for a specific project.
+To start to see the power in `nodenv` let's install a project locally for a specific project.
 
 .. code-block:: console
 
    $ nodenv install 4.8.0
-   $ cd path/to/projects/dir
    $ mkdir path/to/projects/hello-nodenv
    $ cd path/to/projects/hello-nodenv
    $ nodenv local 4.8.0
    $ node -v
    v4.8.0
 
-
 This will write "4.8.0" to a .node-version file. When you cd into this directory nodenv will adjust the version shim (for details on how this works see the README).
 
 Now all our `npm` scripts will work with the local version instead of the global version.
 
+We can see how this works by:
 
-Full-stack Project Progress
----------------------------
+1. Create a new project with `npm init`
+2. In `package.json` add `"start": "node index.js" within `"scripts"`
+3. Then create a simple program and run it
 
-I'm working a personal end-to-end full-stack project to Node.js is a big part of it.
+.. code-block:: console
 
+   $ echo 'console.log("Hello from " + process.version);' > index.js
+   $ npm start
+   ...
+   Hello from v4.8.0
+
+Next steps - nodenv for deployment to production
+------------------------------------------------
+
+How you install Node.js for deployment to production will vary based on your application's overall architecture. If you deploy to Heroku, for example, the Node.js version and all dependencies will be installed automatically based on what is in your `package.json` file.
+
+In other scenarios (deployment to cloud provider instance, for example), you can leverage `nodenv` to facilitate automatic installation of the correct Node.js version.
+
+In the next article on this topic I will write on a simple production deployment using `nodenv` plus process management using `pm2 <http://pm2.keymetrics.io/>`_.
