@@ -2,9 +2,9 @@ Node Virtual Environments with nodenv
 #####################################
 :date: 2017-03-04 18:38
 :modified: 2017-03-04 18:38
-:tags: nodejs, n
+:tags: nodejs
 :category: JavaScript Ecosystem
-:slug: node-version-management-with-n
+:slug: node-virtual-environments-with-nodenv
 :authors: Josh Morel
 :summary: Using nodenv for Node.js virtual environments in Ubuntu
 

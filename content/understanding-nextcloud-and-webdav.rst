@@ -3,6 +3,7 @@ Understanding Nextcloud and WebDAV
 :date: 2017-02-20 15:38
 :modified: 2017-02-20 15:38
 :tags:
+:status: draft
 :category: Private cloud
 :slug: understanding-nextcloud-and-webdav
 :authors: Josh Morel
