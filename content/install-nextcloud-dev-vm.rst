@@ -1,13 +1,15 @@
-Install Nextcloud 11 on Ubuntu 16.04 with MariaDB
-#################################################
+Install Nextcloud 11 Sandbox on Ubuntu 16.04 VM
+###############################################
 :date: 2017-01-07 10:45
-:modified: 2017-01-19 18:38
+:modified: 2017-04-02 15:41
 :tags: nextcloud, linux, ubuntu, mariadb, apache, php
-:category: Private cloud 
+:category: Household cloud
 :slug: install-nextcloud-dev-vm
 :authors: Josh Morel
 :summary: Step-by-step instructions for installing Nextcloud 11 on an Ubuntu 16.04 VM with Apache, MariaDB & PHP 7.0.
 :series: Nextcloud
+
+**Update:** I've updated the titles for the first two articles in my Nextcloud series to explicitly identify the target environment being a "sandbox". The purpose of the sandbox is to develop comfort with Nextcloud before deploying to a production instance where the safety and security of data become critical. I have `another article <{filename}/deploy-nextcloud.rst>`_ which provides step-by-step instructions for a secure production deployment.
 
 Background
 ----------

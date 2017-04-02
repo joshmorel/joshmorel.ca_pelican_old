@@ -1,13 +1,15 @@
-Sync-n-Share with Nextcloud Desktop Clients
-###########################################
+Sync-n-Share Nextcloud Sandbox with Desktop Clients
+###################################################
 :date: 2017-01-15 8:15
-:modified: 2017-01-15 8:15
+:modified: 2017-04-02 15:41
 :tags: nextcloud, ubuntu, iptables
-:category: Private cloud 
+:category: Household cloud
 :slug: nextcloud-clients
 :authors: Josh Morel
-:summary: Step-by-step instructions to use Nextcloud for syncing & sharing across multiple devices on your home network
+:summary: Step-by-step instructions to for sync & share files across multiple devices with a Nextcloud sandbox
 :series: Nextcloud
+
+**Update:** I've updated the titles for the first two articles in my Nextcloud series to explicitly identify the target environment being a "sandbox". The purpose of the sandbox is to develop comfort with Nextcloud before deploying to a production instance where the safety and security of data become critical. I have `another article <{filename}/deploy-nextcloud.rst>`_ which provides step-by-step instructions for a secure production deployment.
 
 Background
 ----------

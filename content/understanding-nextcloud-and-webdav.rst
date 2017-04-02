@@ -4,7 +4,7 @@ Understanding Nextcloud and WebDAV
 :modified: 2017-02-20 15:38
 :tags:
 :status: draft
-:category: Private cloud
+:category: Household cloud
 :slug: understanding-nextcloud-and-webdav
 :authors: Josh Morel
 :summary: Some additional explanations on Nextcloud and it's use of WebDAV and related technology.

@@ -1,9 +1,9 @@
-Deploy Nextcloud 11 on Ubuntu 16.04 to a Private Cloud
-######################################################
+Deploy Nextcloud 11 on Ubuntu 16.04 Cloud Instance
+##################################################
 :date: 2017-01-27 11:40
 :modified: 2017-01-27 11:40
 :tags: nextcloud, apache, ubuntu
-:category: Private cloud
+:category: Household cloud
 :slug: deploy-nextcloud
 :authors: Josh Morel
 :summary: Step-by-step instructions for deploying Nextcloud 11 on Ubuntu 16.04 to a private cloud.
@@ -15,7 +15,7 @@ Deploy Nextcloud 11 on Ubuntu 16.04 to a Private Cloud
 Background
 ----------
 
-So far in this series, we have covered how to `install a Nextcloud server on a VM <{filename}/install-nextcloud-dev-vm.rst>`_ and how to `sync files across clients on multiple devices <{filename}/nextcloud-clients.rst>`_. This was all very good for becoming comfortable in the installation & basic usage of Nextcloud but we still don't have anything providing value.
+So far in this series, we have covered how to `install a Nextcloud <{filename}/install-nextcloud-dev-vm.rst>`_ and `sync files across clients on multiple devices <{filename}/nextcloud-clients.rst>`_ in a sandbox environment. This was all very good for becoming comfortable in the installation & basic usage of Nextcloud but we still don't have anything providing value.
 
 In this article we'll deploy to production so that by the end we'll have a secure, private sync-n-share application over which we have a high degree of control.
 
@@ -133,7 +133,7 @@ Install MariaDB, Apache & PHP modules:
 .. code-block:: console
 
     sudo apt install -y mariadb-server mariadb-client apache2 \
-    php7.0-common php7.0-cli php7.0-bz2 php7.0-curl php7.0-gd php7.0-intl php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-mysql php7.0-xml php7.0-zip libapache2-mod-php7.0
+    php7.0-common php7.0-cli php7.0-bz2 php7.0-curl php7.0-gd php7.0-intl php7.0-mbstring php7.0-mcrypt php7.0-mysql php7.0-xml php7.0-zip libapache2-mod-php7.0
 
 
 :console:`sudoedit /etc/mysql/conf.d/nextcloud.cnf` to create the necessary MariaDB configurations:
