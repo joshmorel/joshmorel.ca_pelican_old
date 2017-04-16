@@ -37,10 +37,10 @@ DEFAULT_PAGINATION = False
 THEME = 'pelican-bootstrap3'
 DISQUS_SITENAME = 'joshmorel'
 CC_LICENSE = 'CC-BY-SA'
+JINJA_ENVIRONMENT = {'extensions': ['jinja2.ext.i18n']}
 
 #################### Plugin-Specific Settings #################
 
 PLUGIN_PATHS = ['pelican-plugins']
-PLUGINS = ['tag_cloud', 'series']
+PLUGINS = ['tag_cloud', 'series', 'i18n_subsites']
 TAG_CLOUD_SORTING = 'alphabetically'
-
