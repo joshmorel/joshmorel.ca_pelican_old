@@ -2,7 +2,7 @@ Style my GitHub Page with Pelican-Themes
 ########################################
 
 :date: 2016-11-28 07:34
-:modified: 2016-11-28 07:34
+:modified: 2017-04-16 12:19
 :tags: python, pelican, github, disqus
 :category: Web publishing 
 :authors: Josh Morel
@@ -51,13 +51,17 @@ You can confirm installation by:
 Applying the Theme
 ------------------
 
-Adding the theme is as simple as editing the **publishconf.py** file with the following line:
+Adding the theme is as simple as editing the **pelicanconf.py** file with the following lines:
+
+**UPDATE**: pelican-bootstrap3 has been upgraded to include internationalization, so two more lines are required in the settings file.
 
 .. code-block:: python
    
    THEME = 'pelican-bootstrap3'
+   PLUGINS = ['i18n_subsites', ]
+   JINJA_ENVIRONMENT = {'extensions': ['jinja2.ext.i18n']}
 
-Of course, replace ``pelican-bootstrap3`` with whatever theme you want to try out.
+Of course, replace ``pelican-bootstrap3`` with whatever theme you want to try out, checking for additional dependencies.
 
 Now build and serve your styled site as described in my `first article <{filename}/create-github-page.rst>`_.
 
