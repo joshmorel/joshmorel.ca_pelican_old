@@ -6,7 +6,10 @@ AUTHOR = u'Josh Morel'
 SITENAME = u'Josh Morel'
 SITEURL = ''
 
+#################### Content/Output Paths ####################
+
 PATH = 'content'
+EXTRA_PATH_METADATA = {'images/favicon.ico': {'path': 'favicon.ico'},}
 
 TIMEZONE = 'America/Toronto'
 
@@ -31,6 +34,7 @@ SOCIAL = (('github', 'http://github.com/joshmorel'),
           )
 
 DEFAULT_PAGINATION = False
+
 
 #################### Theme-Specific Settings #################
 
