@@ -9,6 +9,9 @@ SITEURL = ''
 #################### Content/Output Paths ####################
 
 PATH = 'content'
+OUTPUT_PATH = 'dist/'
+DELETE_OUTPUT_DIRECTORY = True
+
 EXTRA_PATH_METADATA = {'images/favicon.ico': {'path': 'favicon.ico'},}
 
 TIMEZONE = 'America/Toronto'
