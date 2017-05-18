@@ -1,9 +1,9 @@
-Migrate Static Site from GitHub Page to S3 and CloudFront
-#########################################################
+Migrate Static Site from GitHub Pages to S3 and CloudFlare
+##########################################################
 
 :date: 2017-05-17 19:44
 :modified: 2017-05-17 19:44
-:tags: pelican, jekyll, s3, cloudfront
+:tags: pelican, jekyll, s3, cloudflare
 :category: Web publishing 
 :slug: migrate-github-page-s3-cloudflare
 :authors: Josh Morel
